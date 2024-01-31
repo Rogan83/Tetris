@@ -9,7 +9,7 @@ class Program
     static object lockObject = new object();
     static Tetromino t;
     static bool game = true;
-    static float speed = 1;
+    static float speed = 2;
     static int heightEnvironment = 14;
     static int widthEnvironment = 7;        //mindestbreite = 6
     static Vector2 offsetEnvironment = new Vector2(20, 3);
