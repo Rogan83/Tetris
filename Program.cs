@@ -9,14 +9,17 @@ class Program
     static object lockObject = new object();
     static Tetromino t;
     static bool game = true;
-    static float speed = 2;
-    static int heightEnvironment = 14;
-    static int widthEnvironment = 7;        //mindestbreite = 6
+    static float speed = 1;
+    static int heightEnvironment = 24;
+    static int widthEnvironment = 6;        //mindestbreite = 6
     static Vector2 offsetEnvironment = new Vector2(20, 3);
     static Vector2 offSetTetro = new Vector2(0, 10);
     static Collider[,] collider = new Collider[widthEnvironment, heightEnvironment];
     static Timer timerTetroMoveDown, timerCheckInput;
     static bool isCollide = false;
+
+    static int smallestNumb, biggestNumb, xPos;
+    static Random random = new Random();
 
     // braucht man nur für die alternative input variante
     //[DllImport("user32.dll")]
@@ -34,21 +37,9 @@ class Program
 
         RenderEnvironment();
 
-        Random random = new Random();
         RandomTetro();
         // Verschiebt das neue generierte Tetro zufällig in der X-Achse. Dabei darf das Tetro nicht weiter rechts spawnen als die breite zulässt
-        int smallestNumb = 1;
-        int biggestNumb = widthEnvironment - t.width-1;
-        int xPos = 1;
-        if (biggestNumb >= smallestNumb)
-            xPos = random.Next(1, widthEnvironment - t.width);
-        else
-        {
-            Console.WriteLine("Spielbreite ist zu klein gewählt");
-            return;
-        }
-
-        t.Move(new Vector2(xPos, 0));
+        RandomPosition();
 
         if (speed != 0)
             timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, (int)(1000 / speed));
@@ -56,9 +47,7 @@ class Program
             timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, 0);
 
 
-        timerCheckInput = new Timer(_ => OnTimerCheckInputElapsed(), null, 0, 100);
-
-
+        timerCheckInput = new Timer(_ => OnTimerCheckInputElapsed(), null, 0, 10);
 
         while (game)
         {
@@ -69,7 +58,6 @@ class Program
         {
             while (Console.ReadKey().Key != ConsoleKey.Enter) { }
         }
-        
 
         static void InitCollider()
         {
@@ -81,6 +69,22 @@ class Program
                 }
             }
         }
+    }
+
+    static void RandomPosition()
+    {
+        smallestNumb = 0;
+        biggestNumb = widthEnvironment - t.width - 1;
+        xPos = 1;
+        if (biggestNumb >= smallestNumb)
+            xPos = random.Next(smallestNumb, biggestNumb);
+        else
+        {
+            Console.WriteLine("Spielbreite ist zu klein gewählt");
+            return;
+        }
+
+        t.Move(new Vector2(xPos, 0));
     }
 
     static void OnTimerTetroMoveDownElapsed()
@@ -95,8 +99,9 @@ class Program
             if (isCollide)
             {
                 RandomTetro();
-                int r = new Random().Next(1, widthEnvironment - t.width);
-                t.Move(new Vector2(r, 0));
+                //int r = new Random().Next(1, widthEnvironment - t.width);
+                //t.Move(new Vector2(r, 0));
+                RandomPosition();
             }
         }
     }
@@ -225,7 +230,7 @@ class Program
 
     static void RandomTetro()
     {
-        int randomTetro = new Random().Next(0, 0);
+        int randomTetro = new Random().Next(0, 7);
 
         switch (randomTetro)
         {
@@ -258,12 +263,12 @@ class Program
 
     static bool UpdateGame(Vector2 move)
     {
-        Vector2 targetPos1 = Vector2.AddVector(t.Pos1, move);
-        Vector2 targetPos2 = Vector2.AddVector(t.Pos2, move);
-        Vector2 targetPos3 = Vector2.AddVector(t.Pos3, move);
-        Vector2 targetPos4 = Vector2.AddVector(t.Pos4, move);
+        Vector2 targetPos1 = Vector2.AddVector(t.endPos1, move);
+        Vector2 targetPos2 = Vector2.AddVector(t.endPos2, move);
+        Vector2 targetPos3 = Vector2.AddVector(t.endPos3, move);
+        Vector2 targetPos4 = Vector2.AddVector(t.endPos4, move);
 
-        if (collider[targetPos1.x, targetPos1.y].isCollided == false && 
+        if (collider[targetPos1.x, targetPos1.y].isCollided == false &&
             collider[targetPos2.x, targetPos2.y].isCollided == false &&
             collider[targetPos3.x, targetPos3.y].isCollided == false &&
             collider[targetPos4.x, targetPos4.y].isCollided == false)
@@ -274,10 +279,10 @@ class Program
         else if (move.y == 1)
         {
             // Wenn das Tetro kollidiert ist und die Position vom ersten Element vom Tetro über das Spielfeld befindet, dann soll das Spiel beendet werden.
-            if (t.Pos1.y < offSetTetro.y)
+            if (t.endPos1.y < offSetTetro.y)
             {
                 game = false;
-                timerTetroMoveDown.Dispose(); 
+                timerTetroMoveDown.Dispose();
                 timerCheckInput.Dispose();
                 GameOverText();
                 return false;
@@ -296,15 +301,15 @@ class Program
         // Speichert die Position vom neuen Hindernis
         static void SaveNewCollider()
         {
-            collider[t.Pos1.x, t.Pos1.y] = new Collider(true, t.tetroColor); 
-            collider[t.Pos2.x, t.Pos2.y] = new Collider(true, t.tetroColor);
-            collider[t.Pos3.x, t.Pos3.y] = new Collider(true, t.tetroColor);
-            collider[t.Pos4.x, t.Pos4.y] = new Collider(true, t.tetroColor);
+            collider[t.endPos1.x, t.endPos1.y] = new Collider(true, t.tetroColor);
+            collider[t.endPos2.x, t.endPos2.y] = new Collider(true, t.tetroColor);
+            collider[t.endPos3.x, t.endPos3.y] = new Collider(true, t.tetroColor);
+            collider[t.endPos4.x, t.endPos4.y] = new Collider(true, t.tetroColor);
 
             RenderElement();
         }
     }
-    
+
     static void RenderElement()
     {
         if (t.isDead)
@@ -314,26 +319,38 @@ class Program
 
         Console.ForegroundColor = t.tetroColor;
 
-        Console.SetCursorPosition(t.Pos1.x + offsetEnvironment.x, t.Pos1.y + offsetEnvironment.y);
+        Console.SetCursorPosition(t.endPos1.x + offsetEnvironment.x, t.endPos1.y + offsetEnvironment.y);
         Console.Write("#");
-        Console.SetCursorPosition(t.Pos2.x + offsetEnvironment.x, t.Pos2.y + offsetEnvironment.y);
+        Console.SetCursorPosition(t.endPos2.x + offsetEnvironment.x, t.endPos2.y + offsetEnvironment.y);
         Console.Write("#");
-        Console.SetCursorPosition(t.Pos3.x + offsetEnvironment.x, t.Pos3.y + offsetEnvironment.y);
+        Console.SetCursorPosition(t.endPos3.x + offsetEnvironment.x, t.endPos3.y + offsetEnvironment.y);
         Console.Write("#");
-        Console.SetCursorPosition(t.Pos4.x + offsetEnvironment.x, t.Pos4.y + offsetEnvironment.y);
+        Console.SetCursorPosition(t.endPos4.x + offsetEnvironment.x, t.endPos4.y + offsetEnvironment.y);
         Console.Write("#");
     }
 
     static void DeleteTetro()
     {
-        Console.SetCursorPosition(t.Pos1.x + offsetEnvironment.x, t.Pos1.y + offsetEnvironment.y);
-        Console.Write(" ");
-        Console.SetCursorPosition(t.Pos2.x + offsetEnvironment.x, t.Pos2.y + offsetEnvironment.y);
-        Console.Write(" ");
-        Console.SetCursorPosition(t.Pos3.x + offsetEnvironment.x, t.Pos3.y + offsetEnvironment.y);
-        Console.Write(" ");
-        Console.SetCursorPosition(t.Pos4.x + offsetEnvironment.x, t.Pos4.y + offsetEnvironment.y);
-        Console.Write(" ");
+        if (t.endPos1 != null)
+        {
+            Console.SetCursorPosition(t.endPos1.x + offsetEnvironment.x, t.endPos1.y + offsetEnvironment.y);
+            Console.Write(" ");
+        }
+        if (t.endPos2 != null)
+        {
+            Console.SetCursorPosition(t.endPos2.x + offsetEnvironment.x, t.endPos2.y + offsetEnvironment.y);
+            Console.Write(" ");
+        }
+        if (t.endPos3 != null)
+        {
+            Console.SetCursorPosition(t.endPos3.x + offsetEnvironment.x, t.endPos3.y + offsetEnvironment.y);
+            Console.Write(" ");
+        }
+        if (t.endPos4 != null)
+        {
+            Console.SetCursorPosition(t.endPos4.x + offsetEnvironment.x, t.endPos4.y + offsetEnvironment.y);
+            Console.Write(" ");
+        }
     }
 
     static void RenderEnvironment()
@@ -358,14 +375,14 @@ class Program
             collider[i, heightEnvironment - 1] = new Collider(true, ConsoleColor.White);
             Console.Write("-");
         }
-
+        //Debug
         //for (int x = 0; x < widthEnvironment; x++)
         //{
         //    for (int y = 0; y < heightEnvironment; y++)
         //    {
-        //        if (collider[x,y].isCollided == true)
+        //        if (collider[x, y].isCollided == true)
         //        {
-        //            Console.SetCursorPosition(x, y);
+        //            Console.SetCursorPosition(x + offsetEnvironment.x, y + offsetEnvironment.y);
         //            Console.ForegroundColor = ConsoleColor.Red;
         //            Console.Write("a");
         //        }
@@ -391,198 +408,308 @@ class Program
 
     abstract class Tetromino
     {
-        public Vector2 Pos1;
-        public Vector2 Pos2;
-        public Vector2 Pos3;
-        public Vector2 Pos4;
+        public Vector2 startPos1;
+        public Vector2 startPos2;
+        public Vector2 startPos3;
+        public Vector2 startPos4;
+
+        public Vector2 endPos1;
+        public Vector2 endPos2;
+        public Vector2 endPos3;
+        public Vector2 endPos4;
+
+        public Vector2 shift = new Vector2(0, 0);       // wie weit hat sich das Tetro während dem spielen verschoben
 
         public int width;
-        protected int rotation;
+        protected int rotation, startRotation;
+        public int oldRotation;
         public bool isDead = false;
         public ConsoleColor tetroColor;
 
+        public void CalculateEndPositions()
+        {
+            endPos1 = Vector2.AddVector(startPos1, shift);
+            endPos2 = Vector2.AddVector(startPos2, shift);
+            endPos3 = Vector2.AddVector(startPos3, shift);
+            endPos4 = Vector2.AddVector(startPos4, shift);
+        }
+
         public void Move(Vector2 offset)
         {
-            Pos1 = Vector2.AddVector(offset, Pos1);
-            Pos2 = Vector2.AddVector(offset, Pos2);
-            Pos3 = Vector2.AddVector(offset, Pos3);
-            Pos4 = Vector2.AddVector(offset, Pos4);
+            shift = Vector2.AddVector(offset, shift);
+            CalculateEndPositions();
         }
 
         public void Move(int x, int y)
         {
             Vector2 offset = new Vector2(x, y);
-            Pos1 = Vector2.AddVector(offset, Pos1);
-            Pos2 = Vector2.AddVector(offset, Pos2);
-            Pos3 = Vector2.AddVector(offset, Pos3);
-            Pos4 = Vector2.AddVector(offset, Pos4);
+            shift = Vector2.AddVector(offset, shift);
+
+            CalculateEndPositions();
+        }
+
+        //Überprüft, ob nach der Rotation eine Kollision entsteht bzw. ob sich ein Element außerhalb vom Spielfeld betrifft. Falls nicht, dann rotiert sich das Element, ansonsten nicht
+        protected void CheckForCollision(Vector2 newStartPos1, Vector2 newStartPos2, Vector2 newStartPos3, Vector2 newStartPos4)
+        {
+            Vector2 newEndPos1 = Vector2.AddVector(newStartPos1, shift);
+            Vector2 newEndPos2 = Vector2.AddVector(newStartPos2, shift);
+            Vector2 newEndPos3 = Vector2.AddVector(newStartPos3, shift);
+            Vector2 newEndPos4 = Vector2.AddVector(newStartPos4, shift);
+
+            if (newEndPos1.x < 0 || newEndPos1.x > (widthEnvironment - 1) ||
+                newEndPos2.x < 0 || newEndPos2.x > (widthEnvironment - 1) ||
+                newEndPos3.x < 0 || newEndPos3.x > (widthEnvironment - 1) ||
+                newEndPos4.x < 0 || newEndPos4.x > (widthEnvironment - 1))
+            {
+                //Falls Außerhalb vom Spielfeld, dann soll die Rotation rückgängig gemacht werden
+                rotation = oldRotation;
+                return;
+            }
+
+            if (collider[newEndPos1.x, newEndPos1.y].isCollided == false &&
+                collider[newEndPos2.x, newEndPos2.y].isCollided == false &&
+                collider[newEndPos3.x, newEndPos3.y].isCollided == false &&
+                collider[newEndPos4.x, newEndPos4.y].isCollided == false)
+            {
+                startPos1 = newStartPos1;
+                startPos2 = newStartPos2;
+                startPos3 = newStartPos3;
+                startPos4 = newStartPos4;
+            }
+            else
+            {
+                //Falls Kollision, dann soll die Rotation rückgängig gemacht werden
+                rotation = oldRotation;
+            }
         }
 
         public virtual void ResetPos() { }
 
-        public virtual void Turn(int dir) { }
-    }
-
-    class I : Tetromino
-    {
-        
-        public I()
+        public void Turn(int dir)
         {
-            StartPos();
-            width = 4;
-            rotation = 1;
-            tetroColor = ConsoleColor.Blue;
-        }
-
-        private void StartPos()
-        {
-            //Pos1 = new Vector2(0, 0);
-            //Pos2 = new Vector2(0, 1);
-            //Pos3 = new Vector2(0, 2);
-            //Pos4 = new Vector2(0, 3);
-
-            Pos1 = new Vector2(0, 0);
-            Pos2 = new Vector2(1, 0);
-            Pos3 = new Vector2(2, 0);
-            Pos4 = new Vector2(3, 0);
-        }
-
-        public override void ResetPos()
-        {
-            StartPos();
-        }
-
-        public override void Turn(int dir)
-        {
-            int oldRoation = rotation;  // Die vorherige Rotation
+            oldRotation = rotation;  // Die vorherige Rotation
             rotation += dir;            // Die neue Rotation
 
             if (rotation <= 0)
                 rotation = 4;
             else if (rotation > 4)
                 rotation = 1;
-           
-            switch (rotation)
+
+            Rotate(rotation);
+
+            CalculateEndPositions();
+        }
+
+        public virtual void Rotate(int rotation) { }
+    }
+    /// <summary>
+    ///   #
+    ///   #
+    ///   #
+    ///   #
+    /// </summary>
+    class I : Tetromino
+    {
+        public I()
+        {
+            startRotation = rotation = 1;
+            width = 4;
+            tetroColor = ConsoleColor.Blue;
+            StartPos();
+        }
+
+        private void StartPos()
+        {
+            Rotate(startRotation);            
+        }
+
+        public override void ResetPos()
+        {
+            //StartPos();
+            Rotate(startRotation);
+        }
+
+        public override void Rotate(int rot)
+        {
+            switch (rot)
             {
                 case 1:
-                    if (oldRoation == 4)
-                    {
-                        Pos1 = Vector2.AddVector(Pos1, new Vector2(-1, 1));
-                        Pos2 = Vector2.AddVector(Pos2, new Vector2(0, 0));
-                        Pos3 = Vector2.AddVector(Pos3, new Vector2(1, -1));
-                        Pos4 = Vector2.AddVector(Pos4, new Vector2(2, -2));
-                    }
-                    else
-                    {
-                        Pos1 = Vector2.AddVector(Pos1, new Vector2(-2, 1));
-                        Pos2 = Vector2.AddVector(Pos2, new Vector2(-1, 0));
-                        Pos3 = Vector2.AddVector(Pos3, new Vector2(0, -1));
-                        Pos4 = Vector2.AddVector(Pos4, new Vector2(1, -2));
-                    }
-                    break;
+                    Vector2 newStartPos1 = new Vector2(1, 1);
+                    Vector2 newStartPos2 = new Vector2(2, 1);
+                    Vector2 newStartPos3 = new Vector2(3, 1);
+                    Vector2 newStartPos4 = new Vector2(4, 1);
 
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
                 case 2:
-                    if (oldRoation == 1)
-                    {
-                        Pos1 = Vector2.AddVector(Pos1, new Vector2(2, -1));
-                        Pos2 = Vector2.AddVector(Pos2, new Vector2(1, 0));
-                        Pos3 = Vector2.AddVector(Pos3, new Vector2(0, 1));
-                        Pos4 = Vector2.AddVector(Pos4, new Vector2(-1, 2));
-                    }
-                    else
-                    {
-                        Pos1 = Vector2.AddVector(Pos1, new Vector2(2, -2));
-                        Pos2 = Vector2.AddVector(Pos2, new Vector2(1, -1));
-                        Pos3 = Vector2.AddVector(Pos3, new Vector2(0, 0));
-                        Pos4 = Vector2.AddVector(Pos4, new Vector2(-1, 1));
-                    }
+                    newStartPos1 = new Vector2(2, 0);
+                    newStartPos2 = new Vector2(2, 1);
+                    newStartPos3 = new Vector2(2, 2);
+                    newStartPos4 = new Vector2(2, 3);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
                     break;
                 case 3:
-                    if (oldRoation == 2)
-                    {
-                        Pos1 = Vector2.AddVector(Pos1, new Vector2(-2, 2));
-                        Pos2 = Vector2.AddVector(Pos2, new Vector2(-1, 1));
-                        Pos3 = Vector2.AddVector(Pos3, new Vector2(0, 0));
-                        Pos4 = Vector2.AddVector(Pos4, new Vector2(1, -1));
-                    }
-                    else
-                    {
-                        Pos1 = Vector2.AddVector(Pos1, new Vector2(-1, 2));
-                        Pos2 = Vector2.AddVector(Pos2, new Vector2(0, 1));
-                        Pos3 = Vector2.AddVector(Pos3, new Vector2(1, 0));
-                        Pos4 = Vector2.AddVector(Pos4, new Vector2(2, -1));
-                    }
+                    newStartPos1 = new Vector2(0, 2);
+                    newStartPos2 = new Vector2(1, 2);
+                    newStartPos3 = new Vector2(2, 2);
+                    newStartPos4 = new Vector2(3, 2);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
                     break;
                 case 4:
-                    if (oldRoation == 3)
-                    {
-                        Pos1 = Vector2.AddVector(Pos1, new Vector2(1, -2));
-                        Pos2 = Vector2.AddVector(Pos2, new Vector2(0, -1));
-                        Pos3 = Vector2.AddVector(Pos3, new Vector2(-1, 0));
-                        Pos4 = Vector2.AddVector(Pos4, new Vector2(-2, 1));
-                    }
-                    else
-                    {
-                        Pos1 = Vector2.AddVector(Pos1, new Vector2(1, -1));
-                        Pos2 = Vector2.AddVector(Pos2, new Vector2(0, 0));
-                        Pos3 = Vector2.AddVector(Pos3, new Vector2(-1, 1));
-                        Pos4 = Vector2.AddVector(Pos4, new Vector2(-2, 2));
-                    }
+                    newStartPos1 = new Vector2(1, 0);
+                    newStartPos2 = new Vector2(1, 1);
+                    newStartPos3 = new Vector2(1, 2);
+                    newStartPos4 = new Vector2(1, 3);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                default:
+                    break;                   
+            }
+        }
+    }
+    /// <summary>
+    ///   #
+    ///   #
+    ///   #
+    /// ###
+    /// </summary>
+    class J : Tetromino
+    {
+        public J()
+        {
+            startRotation = rotation = 1;
+            width = 3;
+            tetroColor = ConsoleColor.DarkBlue;
+            StartPos();
+        }
+
+        private void StartPos()
+        {
+            Rotate(startRotation);
+        }
+
+        public override void ResetPos()
+        {
+            Rotate(startRotation);
+        }
+
+        public override void Rotate(int rot)
+        {
+            switch (rot)
+            {
+                case 1:
+                    Vector2 newStartPos1 = new Vector2(1, 0);
+                    Vector2 newStartPos2 = new Vector2(1, 1);
+                    Vector2 newStartPos3 = new Vector2(2, 1);
+                    Vector2 newStartPos4 = new Vector2(3, 1);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 2:
+                    newStartPos1 = new Vector2(2, 0);
+                    newStartPos2 = new Vector2(3, 0);
+                    newStartPos3 = new Vector2(2, 1);
+                    newStartPos4 = new Vector2(2, 2);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 3:
+                    newStartPos1 = new Vector2(1, 1);
+                    newStartPos2 = new Vector2(2, 1);
+                    newStartPos3 = new Vector2(3, 1);
+                    newStartPos4 = new Vector2(3, 2);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 4:
+                    newStartPos1 = new Vector2(2, 0);
+                    newStartPos2 = new Vector2(2, 1);
+                    newStartPos3 = new Vector2(1, 2);
+                    newStartPos4 = new Vector2(2, 2);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
                     break;
                 default:
                     break;
             }
         }
     }
-
-    class J : Tetromino
-    {
-        public J()
-        {
-            StartPos();
-            width = 2;
-            tetroColor = ConsoleColor.DarkBlue;
-        }
-
-        private void StartPos()
-        {
-            Pos1 = new Vector2(1, 0);
-            Pos2 = new Vector2(1, 1);
-            Pos3 = new Vector2(1, 2);
-            Pos4 = new Vector2(0, 2);
-        }
-
-        public override void ResetPos()
-        {
-            StartPos();
-        }
-
-        
-    }
-
+    /// <summary>
+    /// #
+    /// #
+    /// #
+    /// ###
+    /// </summary>
     class L : Tetromino
     {
         public L()
         {
-            StartPos();
-            width = 2;
+            startRotation = rotation = 1;
+            width = 3;
             tetroColor = ConsoleColor.Red;
-        }
-
-        public override void ResetPos()
-        {
             StartPos();
         }
 
         void StartPos()
         {
-            Pos1 = new Vector2(0, 0);
-            Pos2 = new Vector2(0, 1);
-            Pos3 = new Vector2(0, 2);
-            Pos4 = new Vector2(1, 2);
+            Rotate(startRotation);
+        }
+
+        public override void ResetPos()
+        {
+            Rotate(startRotation);
+        }
+
+        public override void Rotate(int rot)
+        {
+            switch (rot)
+            {
+                case 1:
+                    Vector2 newStartPos1 = new Vector2(1, 1);
+                    Vector2 newStartPos2 = new Vector2(2, 1);
+                    Vector2 newStartPos3 = new Vector2(3, 1);
+                    Vector2 newStartPos4 = new Vector2(3, 0);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 2:
+                    newStartPos1 = new Vector2(2, 0);
+                    newStartPos2 = new Vector2(2, 1);
+                    newStartPos3 = new Vector2(2, 2);
+                    newStartPos4 = new Vector2(3, 2);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 3:
+                    newStartPos1 = new Vector2(1, 1);
+                    newStartPos2 = new Vector2(1, 2);
+                    newStartPos3 = new Vector2(2, 1);
+                    newStartPos4 = new Vector2(3, 1);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 4:
+                    newStartPos1 = new Vector2(1, 0);
+                    newStartPos2 = new Vector2(2, 0);
+                    newStartPos3 = new Vector2(2, 1);
+                    newStartPos4 = new Vector2(2, 2);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                default:
+                    break;
+            }
         }
     }
-
+    /// <summary>
+    /// 
+    ///  ##
+    ///  ##
+    ///  
+    /// </summary>
     class Square : Tetromino
     {
         public Square()
@@ -594,10 +721,10 @@ class Program
 
         private void StartPos()
         {
-            Pos1 = new Vector2(0, 0);
-            Pos2 = new Vector2(0, 1);
-            Pos3 = new Vector2(1, 0);
-            Pos4 = new Vector2(1, 1);
+            startPos1 = new Vector2(1, 0);
+            startPos2 = new Vector2(1, 1);
+            startPos3 = new Vector2(2, 0);
+            startPos4 = new Vector2(2, 1);
         }
 
         public override void ResetPos()
@@ -605,73 +732,203 @@ class Program
             StartPos();
         }
     }
-
+    /// <summary>
+    /// 
+    ///  ##
+    ///   ##
+    ///   
+    /// </summary>
     class Z : Tetromino
     {
         public Z()
         {
-            StartPos();
+            startRotation = rotation = 1;
             width = 3;
             tetroColor = ConsoleColor.DarkRed;
+            StartPos();
         }
 
         private void StartPos()
         {
-            Pos1 = new Vector2(0, 0);
-            Pos2 = new Vector2(1, 0);
-            Pos3 = new Vector2(1, 1);
-            Pos4 = new Vector2(2, 1);
+            Rotate(startRotation);
         }
 
         public override void ResetPos()
         {
-            StartPos();
+            Rotate(startRotation);
+        }
+        
+        public override void Rotate(int rot)
+        {
+            switch (rot)
+            {
+                case 1:
+                    Vector2 newStartPos1 = new Vector2(1, 0);
+                    Vector2 newStartPos2 = new Vector2(2, 0);
+                    Vector2 newStartPos3 = new Vector2(2, 1);
+                    Vector2 newStartPos4 = new Vector2(3, 1);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 2:
+                    newStartPos1 = new Vector2(2, 0);
+                    newStartPos2 = new Vector2(1, 1);
+                    newStartPos3 = new Vector2(2, 1);
+                    newStartPos4 = new Vector2(1, 2);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 3:
+                    newStartPos1 = new Vector2(1, 1);
+                    newStartPos2 = new Vector2(2, 1);
+                    newStartPos3 = new Vector2(2, 2);
+                    newStartPos4 = new Vector2(3, 2);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 4:
+                    newStartPos1 = new Vector2(2, 0);
+                    newStartPos2 = new Vector2(1, 1);
+                    newStartPos3 = new Vector2(2, 1);
+                    newStartPos4 = new Vector2(1, 2);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                default:
+                    break;
+            }
         }
     }
-
+    /// <summary>
+    /// ###
+    ///  #
+    ///  #
+    /// </summary>
     class T : Tetromino
     {
         public T()
         {
-            StartPos();
+            startRotation = rotation = 1;
             width = 3;
             tetroColor = ConsoleColor.DarkMagenta;
+            StartPos();
         }
 
         private void StartPos()
         {
-            Pos1 = new Vector2(0, 0);
-            Pos2 = new Vector2(1, 0);
-            Pos3 = new Vector2(2, 0);
-            Pos4 = new Vector2(1, 1);
+            Rotate(startRotation);
         }
 
         public override void ResetPos()
         {
-            StartPos();
+            Rotate(startRotation);
+        }
+
+        public override void Rotate(int rot)
+        {
+            switch (rot)
+            {
+                case 1:
+                    Vector2 newStartPos1 = new Vector2(1, 1);
+                    Vector2 newStartPos2 = new Vector2(2, 0);
+                    Vector2 newStartPos3 = new Vector2(2, 1);
+                    Vector2 newStartPos4 = new Vector2(3, 1);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 2:
+                    newStartPos1 = new Vector2(1, 0);
+                    newStartPos2 = new Vector2(1, 1);
+                    newStartPos3 = new Vector2(2, 1);
+                    newStartPos4 = new Vector2(1, 2);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 3:
+                    newStartPos1 = new Vector2(1, 1);
+                    newStartPos2 = new Vector2(2, 1);
+                    newStartPos3 = new Vector2(2, 2);
+                    newStartPos4 = new Vector2(3, 1);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 4:
+                    newStartPos1 = new Vector2(2, 0);
+                    newStartPos2 = new Vector2(1, 1);
+                    newStartPos3 = new Vector2(2, 1);
+                    newStartPos4 = new Vector2(2, 2);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                default:
+                    break;
+            }
         }
     }
-
+    /// <summary>
+    /// #
+    /// ##
+    ///  #
+    /// </summary>
     class S : Tetromino
     {
         public S()
         {
-            StartPos();
+            startRotation = rotation = 1;
             width = 3;
             tetroColor = ConsoleColor.Green;
+            StartPos();
         }
 
         private void StartPos()
         {
-            Pos1 = new Vector2(1, 0);
-            Pos2 = new Vector2(2, 0);
-            Pos3 = new Vector2(0, 1);
-            Pos4 = new Vector2(1, 1);
+            Rotate(startRotation);
         }
 
         public override void ResetPos()
         {
-            StartPos();
+            Rotate(startRotation);
+        }
+
+        public override void Rotate(int rot)
+        {
+            switch (rot)
+            {
+                case 1:
+                    Vector2 newStartPos1 = new Vector2(1, 1);
+                    Vector2 newStartPos2 = new Vector2(2, 0);
+                    Vector2 newStartPos3 = new Vector2(2, 1);
+                    Vector2 newStartPos4 = new Vector2(3, 0);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 2:
+                    newStartPos1 = new Vector2(1, 0);
+                    newStartPos2 = new Vector2(1, 1);
+                    newStartPos3 = new Vector2(2, 1);
+                    newStartPos4 = new Vector2(2, 2);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 3:
+                    newStartPos1 = new Vector2(1, 2);
+                    newStartPos2 = new Vector2(2, 1);
+                    newStartPos3 = new Vector2(2, 2);
+                    newStartPos4 = new Vector2(3, 1);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                case 4:
+                    newStartPos1 = new Vector2(1, 0);
+                    newStartPos2 = new Vector2(1, 1);
+                    newStartPos3 = new Vector2(2, 1);
+                    newStartPos4 = new Vector2(2, 2);
+
+                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
@@ -686,10 +943,18 @@ class Program
 
         public static Vector2 AddVector(Vector2 vec1, Vector2 vec2)
         {
-            Vector2 newPos = new Vector2(0, 0);
-            newPos.x = vec1.x + vec2.x;
-            newPos.y = vec1.y + vec2.y;
-            return newPos;
+            if (vec1 != null && vec2 != null)
+            {
+                Vector2 newPos = new Vector2(0, 0);
+                newPos.x = vec1.x + vec2.x;
+                newPos.y = vec1.y + vec2.y;
+                return newPos;
+            }
+            else
+            {
+                //Console.WriteLine("Bei der Methode AddVector wurde ein NULL Wert übergeben");
+                return null;
+            }
         }
     }
 
@@ -699,11 +964,11 @@ class Program
     class Collider
     {
         public bool isCollided;
-        public ConsoleColor color; 
+        public ConsoleColor color;
 
         public Collider(bool isCollided, ConsoleColor color)
         {
-            this.isCollided = isCollided; 
+            this.isCollided = isCollided;
             this.color = color;
         }
     }
