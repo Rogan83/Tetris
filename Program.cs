@@ -32,7 +32,6 @@ namespace Tetris
         //Eigenschaften fürs blinken, wenn Reihe(n) gelöscht wurden
         static int blinkCount = 3;
         static int blinkSpeed = 200;
-        static ConsoleColor blinkColor = ConsoleColor.White;
 
         // braucht man nur für die alternative input variante
         //[DllImport("user32.dll")]
@@ -257,7 +256,7 @@ namespace Tetris
         static void RandomTetro()
         {
             int randomTetro = new Random().Next(0, 7);
-            //int randomTetro = new Random().Next(0, 1);
+            //int randomTetro = new Random().Next(0, 2);
 
             switch (randomTetro)
             {
@@ -394,6 +393,8 @@ namespace Tetris
                 TetrisBoard newTetrisBoard = new(heightEnvironment, widthEnvironment, enviromentColor);
                 InitEnviroment();
 
+                var oldTetrisBoard = CopyFrom(tetrisBoard);           // eine Sicherung vom alten Board, damit ich noch auf die Farben, wie sie vorher waren, zugreifen kann, da einzelne Zeilen gelöscht werden und das tetrisBoard überschrieben wird. Wird für das aufblinken von den Zeilen, die gelöscht wurden benötigt, damit diese mit den ursprünglichen Farben aufblinken
+
                 for (int row = 0; row < heightEnvironment; row++)
                 {
                     if (!linesToClear.Contains(row))
@@ -410,48 +411,47 @@ namespace Tetris
                     }
                 }
 
-                
-
                 tetrisBoard = newTetrisBoard;
                 #endregion
 
-
-
+                Blink();
+                
                 // blinken
-                timerTetroMoveDown.Change(Timeout.Infinite, Timeout.Infinite);   // Timer anhalten
-                
-                if (linesToClear.Count > 0)
+                void Blink()
                 {
-                    for (int i = 0; i < blinkCount; i++)
+                    timerTetroMoveDown.Change(Timeout.Infinite, Timeout.Infinite);   // Timer anhalten
+
+                    if (linesToClear.Count > 0)
                     {
-                        foreach (var rowToClear in linesToClear)
+                        for (int i = 0; i < blinkCount; i++)
                         {
-                            for (int column = 1; column < widthEnvironment - 1; column++)
+                            foreach (var rowToClear in linesToClear)
                             {
-                                Console.SetCursorPosition(column + offsetEnvironment.x, rowToClear + offsetEnvironment.y);
-                                Console.Write(" ");
+                                for (int column = 1; column < widthEnvironment - 1; column++)
+                                {
+                                    Console.SetCursorPosition(column + offsetEnvironment.x, rowToClear + offsetEnvironment.y);
+                                    Console.Write(" ");
+                                }
                             }
-                        }
 
-                        Thread.Sleep(blinkSpeed);
+                            Thread.Sleep(blinkSpeed);
 
-                        foreach (var rowToClear in linesToClear)
-                        {
-                            for (int column = 1; column < widthEnvironment - 1; column++)
+                            foreach (var rowToClear in linesToClear)
                             {
-                                Console.SetCursorPosition(column + offsetEnvironment.x, rowToClear + offsetEnvironment.y);
-                                Console.ForegroundColor = blinkColor; //tetrisBoard.Grid[rowToClear][column].color;
-                                Console.Write("#");
+                                for (int column = 1; column < widthEnvironment - 1; column++)
+                                {
+                                    Console.SetCursorPosition(column + offsetEnvironment.x, rowToClear + offsetEnvironment.y);
+                                    Console.ForegroundColor = oldTetrisBoard.Grid[rowToClear][column].color;
+                                    Console.Write("#");
+                                }
                             }
-                        }
 
-                        Thread.Sleep(blinkSpeed);
+                            Thread.Sleep(blinkSpeed);
+                        }
                     }
-                }
-                
-                timerTetroMoveDown.Change(0, (int)(1000 / speed));  // timer wieder starten
-                ///
 
+                    timerTetroMoveDown.Change(0, (int)(1000 / speed));  // timer wieder starten
+                }
 
 
 
