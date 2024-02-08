@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Linq;
+using System.Data.Common;
 
 class Program
 {
@@ -11,10 +13,10 @@ class Program
     static bool game = true;
     static float speed = 1;
     static int heightEnvironment = 14;
-    static int widthEnvironment = 12;        //mindestbreite = 6
+    static int widthEnvironment = 8;        //mindestbreite = 6
     static Vector2 offsetEnvironment = new Vector2(20, 3);
-    static Vector2 offSetTetro = new Vector2(0, 10);
-    static Collider[,] collider = new Collider[widthEnvironment, heightEnvironment];
+    static Vector2 offSetTetro = new Vector2(0, 5);
+    //static Collider[,] collider = new Collider[widthEnvironment, heightEnvironment];
     static TetrisBoard tetrisBoard;
 
     static Timer timerTetroMoveDown, timerCheckInput;
@@ -22,6 +24,8 @@ class Program
 
     static int smallestNumb, biggestNumb, xPos;
     static Random random = new Random();
+
+    static ConsoleColor enviromentColor = ConsoleColor.Gray;
 
     // braucht man nur für die alternative input variante
     //[DllImport("user32.dll")]
@@ -32,14 +36,10 @@ class Program
     {
         Console.BufferHeight = 70;
         Console.CursorVisible = false;
-        Console.BackgroundColor = ConsoleColor.Black;
-        Console.ForegroundColor = ConsoleColor.White;
-
-        InitCollider();
-
-        //neu
+        //Console.BackgroundColor = ConsoleColor.Black;
+        //Console.ForegroundColor = ConsoleColor.White;
+       
         tetrisBoard = new(heightEnvironment, widthEnvironment);
-        //
 
         InitAndRenderEnvironment();
 
@@ -65,16 +65,16 @@ class Program
             while (Console.ReadKey(true).Key != ConsoleKey.Enter) { }
         }
 
-        static void InitCollider()
-        {
-            for (int x = 0; x < widthEnvironment; x++)
-            {
-                for (int y = 0; y < heightEnvironment; y++)
-                {
-                    collider[x, y] = new Collider(false, ConsoleColor.White);
-                }
-            }
-        }
+        //static void InitCollider()
+        //{
+        //    for (int x = 0; x < widthEnvironment; x++)
+        //    {
+        //        for (int y = 0; y < heightEnvironment; y++)
+        //        {
+        //            collider[x, y] = new Collider(false, ConsoleColor.White);
+        //        }
+        //    }
+        //}
     }
 
     static void RandomPosition()
@@ -100,15 +100,18 @@ class Program
             DeleteTetro();
             Vector2 moveDown = new Vector2(0, 1);
             isCollide = UpdateGame(moveDown);
-            RenderElement();
 
             if (isCollide)
             {
+                isCollide = false;
                 RandomTetro();
                 //int r = new Random().Next(1, widthEnvironment - t.width);
                 //t.Move(new Vector2(r, 0));
                 RandomPosition();
             }
+
+            RenderElement();
+
         }
     }
 
@@ -222,7 +225,17 @@ class Program
         void Move(int x, int y)
         {
             DeleteTetro();
-            UpdateGame(new Vector2(x, y));
+            isCollide = UpdateGame(new Vector2(x, y));
+
+            if (isCollide)
+            {
+                isCollide = false;
+                RandomTetro();
+                //int r = new Random().Next(1, widthEnvironment - t.width);
+                //t.Move(new Vector2(r, 0));
+                RandomPosition();
+            }
+
             RenderElement();
         }
 
@@ -237,6 +250,7 @@ class Program
     static void RandomTetro()
     {
         int randomTetro = new Random().Next(0, 7);
+        //int randomTetro = new Random().Next(0, 1);
 
         switch (randomTetro)
         {
@@ -288,7 +302,7 @@ class Program
         }
         else if (move.y == 1)
         {
-            // Wenn das Tetro kollidiert ist und die Position vom ersten Element vom Tetro über das Spielfeld befindet, dann soll das Spiel beendet werden.
+            // Wenn das Tetro mit dem Boden kollidiert ist und die Position vom ersten Element vom Tetro über das Spielfeld befindet, dann soll das Spiel beendet werden.
             if (t.endPos1.y < offSetTetro.y)
             {
                 game = false;
@@ -296,10 +310,15 @@ class Program
                 timerCheckInput.Dispose();
                 GameOverText();
                 return false;
-            }
+            }//Wenn das Tetro mit dem Boden kollidiert ist und nicht über das Spielfeld hinaus ragt
             else
             {
-                SaveNewCollider();
+                SaveNewCollider();                      //Speicher die Pos vom neuen Tetro ab
+                int rowCount = CheckAndClearLines();    //Überprüft, ob eine Linie vollständig ist und löscht diese dann, wenn dies der Fall ist.
+                                                        //Gibt die Anzahl der gelöschten Zeilen zurück, welche benötigt wird, um die Punkte zu berechnen
+
+                RenderAll();                            // Rendert alles neu
+
                 return true;
             }
         }
@@ -309,6 +328,8 @@ class Program
         }
 
         // Speichert die Position vom neuen Hindernis
+
+        
         static void SaveNewCollider()
         {
             //collider[t.endPos1.x, t.endPos1.y] = new Collider(true, t.tetroColor);
@@ -322,6 +343,132 @@ class Program
             tetrisBoard.Grid[t.endPos4.y][t.endPos4.x] = new Collider(true, t.tetroColor);
 
             RenderElement();
+        }
+
+        static int CheckAndClearLines()
+        {
+            // Überprüfe, ob die Zeile komplett ist. 
+            List<int> linesToClear = new List<int>();
+
+            // Durchlaufe jede Zeile von unten nach oben außer die letzte, da dies der Boden ist
+            for (int row = heightEnvironment - 2; row >= 0; row--)
+            {
+                // Überprüfe, ob alle Zellen in der Zeile gefüllt sind
+                if (tetrisBoard.Grid[row].All(cell => cell.isCollided == true))
+                {
+                    // Füge die zu löschende Zeile zur Liste hinzu
+                    linesToClear.Add(row);
+                }
+            }
+            bool firstRowRemoved = false;
+            #region alternativesLöschen
+            // Lösche die vollständigen Zeilen und füge neue leere Zeilen oben hinzu
+            //foreach (int row in linesToClear)
+            //{
+            //    if (!firstRowRemoved)
+            //        tetrisBoard.Grid.RemoveAt(row);
+            //    else
+            //        tetrisBoard.Grid.RemoveAt(row + 1);
+
+            //    firstRowRemoved = true;
+            //    tetrisBoard.Grid.Insert(0, new Collider[widthEnvironment]);
+
+            //    for (int c = 0; c < widthEnvironment; c++)
+            //    {
+            //        if (c == 0 || c == widthEnvironment - 1)
+            //            tetrisBoard.Grid[0][c] = new Collider(true, ConsoleColor.White);
+            //        else
+            //            tetrisBoard.Grid[0][c] = new Collider(false, ConsoleColor.White);
+            //    }
+            //}
+            #endregion
+
+            #region zweiteVarianteZumLöschen
+            TetrisBoard newTetrisBoard = new(heightEnvironment, widthEnvironment);
+            InitEnviroment();
+
+            for (int row = 0; row < heightEnvironment; row++)
+            {
+                if (!linesToClear.Contains(row))
+                {
+                    for (int column = 0; column < widthEnvironment; column++)
+                    {
+                        newTetrisBoard.Grid[row][column] = tetrisBoard.Grid[row][column];
+                    }
+                }// Todo: Die anderen vorhandenen Elemente müssen noch nach unten verschoben werden
+                else//Wenn die Zeile nicht hinzugefügt werden soll, dann sollen alle anderen Zeilen um 1 Einheit nach unten verschoben werden
+                {
+                    TetrisBoard temp = new(heightEnvironment, widthEnvironment);
+
+                    for (int r = 0; r < heightEnvironment; r++)
+                    {
+                        for (int c = 0; c < widthEnvironment; c++)
+                        {
+                            temp.Grid[r][c] = newTetrisBoard.Grid[r][c];
+                        }
+                    }
+
+
+                    for (int i = 0; i < row; i++)
+                    {
+                        newTetrisBoard.Grid[i + 1] = temp.Grid[i];
+                    }
+                }
+
+            }
+
+            tetrisBoard = newTetrisBoard;
+            #endregion
+
+            return linesToClear.Count;
+
+            void InitEnviroment()
+            {
+                for (int row = 0; row < heightEnvironment; row++)
+                {
+                    for (int column = 0; column < widthEnvironment; column++)
+                    {
+                        if (row == heightEnvironment - 1)
+                        {
+                            newTetrisBoard.Grid[row][column] = new Collider(true, enviromentColor);
+                        }
+                        else if (column == 0 || column == widthEnvironment - 1)
+                        {
+                            newTetrisBoard.Grid[row][column] = new Collider(true, enviromentColor);
+                        }
+                    }
+                }
+            }
+        }
+
+        static void RenderAll()
+        {
+            // Render die Umgebung inkl. Tetros (mit den richtigen Farben) erneut
+            for (int y = 0; y < heightEnvironment; y++)
+            {
+                for (int x = 0; x < widthEnvironment; x++)
+                {
+                    //Lösche die Elemente an dieser Stelle
+                    Console.SetCursorPosition(x + offsetEnvironment.x, y + offsetEnvironment.y);
+                    Console.WriteLine(" ");
+
+                    if (tetrisBoard.Grid[y][x].isCollided == true)
+                    {
+                        Console.SetCursorPosition(x + offsetEnvironment.x, y + offsetEnvironment.y);
+                        Console.ForegroundColor = tetrisBoard.Grid[y][x].color;
+                        if (y == heightEnvironment-1)
+                            Console.WriteLine("-");
+                        else if (y >= offSetTetro.y)
+                        {
+                            if (x == 0 || x == widthEnvironment - 1)
+                                Console.WriteLine("|");
+                            else
+                                Console.WriteLine("#");
+                        }
+                    }
+                    
+                }
+            }
         }
     }
 
@@ -372,18 +519,18 @@ class Program
     /// </summary>
     static void InitAndRenderEnvironment()
     {
-        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.ForegroundColor = enviromentColor;
         for (int i = 0; i < heightEnvironment; i++)
         {
             Console.SetCursorPosition(offsetEnvironment.x, i + offsetEnvironment.y);
             //collider[0, i] = new Collider(true, ConsoleColor.White);
-            tetrisBoard.Grid[i][0] = new Collider(true, ConsoleColor.White);
+            tetrisBoard.Grid[i][0] = new Collider(true, enviromentColor);
             if (i >= offSetTetro.y)
                 Console.Write("|");
 
             Console.SetCursorPosition(widthEnvironment - 1 + offsetEnvironment.x, i + offsetEnvironment.y);
             //collider[widthEnvironment - 1, i] = new Collider(true, ConsoleColor.White);
-            tetrisBoard.Grid[i][widthEnvironment-1] = new Collider(true, ConsoleColor.White);
+            tetrisBoard.Grid[i][widthEnvironment-1] = new Collider(true, enviromentColor);
             if (i >= offSetTetro.y)
                 Console.Write("|");
         }
@@ -392,7 +539,7 @@ class Program
         {
             Console.SetCursorPosition(i + offsetEnvironment.x, heightEnvironment - 1 + offsetEnvironment.y);
             //collider[i, heightEnvironment - 1] = new Collider(true, ConsoleColor.White);
-            tetrisBoard.Grid[heightEnvironment - 1][i] = new Collider(true, ConsoleColor.White);
+            tetrisBoard.Grid[heightEnvironment - 1][i] = new Collider(true, enviromentColor);
             Console.Write("-");
         }
         //Debug
@@ -1018,7 +1165,7 @@ class Program
                 Grid.Add(new Collider[Cols]);
                 for (int c = 0; c < Cols; c++)
                 {
-                    Grid[r][c] = new Collider(false, ConsoleColor.White);
+                    Grid[r][c] = new Collider(false, enviromentColor);
                 }
             }
         }
