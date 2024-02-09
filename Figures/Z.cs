@@ -7,10 +7,8 @@ using System.Threading.Tasks;
 namespace Tetris.Figures
 {
     /// <summary>
-    /// 
     ///  ##
     ///   ##
-    ///   
     /// </summary>
     internal class Z : Tetromino
     {

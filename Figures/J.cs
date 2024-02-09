@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Tetris.Figures
 {
-    internal  class J : Tetromino
+    internal class J : Tetromino
     {
         /// <summary>
         ///   #
         ///   #
-        /// ###
+        ///  ##
         /// </summary>
         public J()
         {

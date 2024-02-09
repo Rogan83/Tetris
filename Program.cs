@@ -6,18 +6,20 @@ using System.Threading;
 using System.Linq;
 using System.Data.Common;
 using Tetris.Figures;
+using Tetris.Menus;
 
 namespace Tetris
 {
     public class Program
     {
+        #region PropertiesAndFields
         static object lockObject = new object();
         static Tetromino tetro;
         static Tetromino nextTetro;
         static bool game = true;
-        static int speed = 1;
-        static int heightEnvironment = 18;
-        public static int widthEnvironment = 10;        //mindestbreite = 6
+        static float speed = .5f;
+        static int heightEnvironment = 12;
+        public static int widthEnvironment = 6;        //mindestbreite = 6. 10 ist ein guter wert
         static Vector2 offsetEnvironment = new Vector2(20, 3);
         static Vector2 offSetTetro = new Vector2(0, 5);
         internal static TetrisBoard tetrisBoard;
@@ -37,30 +39,57 @@ namespace Tetris
         //Eigenschaften von der Tetro Vorschau
         internal static Vector2 PrevievPos { get; set; } = new Vector2(offsetEnvironment.x + widthEnvironment + 5, offsetEnvironment.y + offSetTetro.y);
         internal static Vector2 PreviewFrameSize { get; set; } = new(7, 8);
-        internal static ConsoleColor PreviewFrameColor { get; set; } = ConsoleColor.White;
+        internal static ConsoleColor PreviewFrameColor { get; set; } = ConsoleColor.DarkYellow;
 
 
         public static int Points { get; set; }
         public static int DeletedRowsTotal { get; set; }
 
-        private static int speedShreshold = 10;
+        private static int speedShreshold = 1;
         private static Vector2 offsetPoints = new Vector2(0, 0);
 
         // braucht man nur für die alternative input variante
         //[DllImport("user32.dll")]
         //public static extern short GetKeyState(ConsoleKey vKey);
         //
-
+        #endregion
         static void Main()
+        {
+            #region Initialisieren
+            Init(true);
+            #endregion
+
+            bool gameLoop = true;
+            while (gameLoop)
+            {
+                if (!game)
+                {
+                    if (Console.ReadKey(true).Key == ConsoleKey.R)
+                    {
+                        game = true;
+                        Console.Clear();
+                        Reset();
+                        Init(false);
+                        continue;
+                    }
+                    else if (Console.ReadKey(true).Key == ConsoleKey.Escape)
+                    {
+                        gameLoop = false;
+                    }
+                }
+            }
+        }
+        /// <summary>
+        /// Initialsiert die Startwerte, rendert den Hintergrund und wählt ein zufälliges start Tetro und ein zufälliges 
+        /// Tetro aus, welches als nächstes erscheinen wird.
+        /// </summary>
+        private static void Init(bool showStartScreen)
         {
             Console.BufferHeight = 70;
             Console.CursorVisible = false;
-            //Console.BackgroundColor = ConsoleColor.Black;
-            //Console.ForegroundColor = ConsoleColor.White;
-
             tetrisBoard = new(heightEnvironment, widthEnvironment, enviromentColor);
-
-            //Initialisieren
+            if (showStartScreen)
+                MainMenu.ShowStartScreen();
             InitAndRenderEnvironment();
             RenderInfos();
 
@@ -70,36 +99,22 @@ namespace Tetris
             nextTetro.RenderPreview();
 
             RandomPosition();   // Verschiebt das neue generierte Tetro zufällig in der X-Achse. Dabei darf das Tetro nicht weiter rechts spawnen als die breite zulässt
-            ///
 
             if (speed != 0)
-                timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, (int)(1000 / speed));
+                timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, (int)(500 / speed));
             else
                 timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, 0);
 
-
             timerCheckInput = new Timer(_ => OnTimerCheckInputElapsed(), null, 0, 10);
-
-            while (game)
-            {
-                //HandleInput();
-            }
-
-            if (!game)
-            {
-                while (Console.ReadKey(true).Key != ConsoleKey.Enter) { }
-            }
-
-            //static void InitCollider()
-            //{
-            //    for (int x = 0; x < widthEnvironment; x++)
-            //    {
-            //        for (int y = 0; y < heightEnvironment; y++)
-            //        {
-            //            collider[x, y] = new Collider(false, ConsoleColor.White);
-            //        }
-            //    }
-            //}
+        }
+        /// <summary>
+        /// Resettet alle Werte
+        /// </summary>
+        private static void Reset()
+        {
+            speed = .5f;
+            Points = 0;
+            DeletedRowsTotal = 0;
         }
 
         static void RandomPosition()
@@ -335,7 +350,7 @@ namespace Tetris
                     game = false;
                     timerTetroMoveDown.Dispose();
                     timerCheckInput.Dispose();
-                    GameOverText();
+                    GameOver();
                     return false;
                 }//Wenn das Tetro mit dem Boden kollidiert ist und nicht über das Spielfeld hinaus ragt
                 else
@@ -345,6 +360,8 @@ namespace Tetris
                                                             //Gibt die Anzahl der gelöschten Zeilen zurück, welche benötigt wird, um die Punkte zu berechnen
                     Points += CalculatePoints(deletedRows);
                     IncreaseSpeed(deletedRows);
+                    timerTetroMoveDown.Dispose();
+                    timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, (int)(500 / speed));
                     RenderAll();                            // Rendert alles neu
 
                     return true;
@@ -534,7 +551,7 @@ namespace Tetris
                     default:
                         break;
                 }
-                return pointFactor * speed;
+                return pointFactor * (int)(speed * 2);
             }
             
             static void IncreaseSpeed(int deletedRows)
@@ -544,7 +561,7 @@ namespace Tetris
                 if (DeletedRowsTotal >= speedShreshold)
                 {
                     DeletedRowsTotal = 0;
-                    speed++;
+                    speed += .5f;
                 }
             }
 
@@ -599,9 +616,9 @@ namespace Tetris
             static void RenderNewInfos()
             {
                 Console.SetCursorPosition(offsetPoints.x, offsetPoints.y);
-                Console.WriteLine($"Punkte: {Points}");
-                Console.WriteLine($"Level: {speed}");
-                Console.WriteLine($"fehlende Zeilen bis nächstes Level: {speedShreshold - DeletedRowsTotal}");
+                Console.WriteLine($"Points: {Points}");
+                Console.WriteLine($"Level: {speed * 2}");
+                Console.WriteLine($"Rows left until level up: {speedShreshold - DeletedRowsTotal}");
             }
         }
 
@@ -690,20 +707,20 @@ namespace Tetris
             //}
         }
 
-        static void GameOverText()
+        static void GameOver()
         {
-            Console.SetCursorPosition(offsetEnvironment.x, 0);
-            RenderElement();
-            Console.ForegroundColor = ConsoleColor.DarkRed;
-            Console.Write("GAME OVER");
+            //Console.SetCursorPosition(offsetEnvironment.x, 0);
+            //RenderElement();
+            //Console.ForegroundColor = ConsoleColor.DarkRed;
+            //Console.Write("GAME OVER");
 
-            int space = 5;
-            for (int i = 0; i < space; i++)
-            {
-                Console.WriteLine("");
-            }
-            //Console.ReadLine();
-            //while (Console.ReadKey().Key != ConsoleKey.Enter) { }
+            //int space = 5;
+            //for (int i = 0; i < space; i++)
+            //{
+            //    Console.WriteLine("");
+            //}
+
+            GameOverMenu.ShowGameOverScreen();
         }
     }
 }
