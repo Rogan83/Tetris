@@ -55,6 +55,15 @@ namespace Tetris.Menus
                 Console.SetCursorPosition(offset.x + 12, offset.y + 8);
                 Console.WriteLine("Press Enter to start the game.");
 
+                int highscore = GameOverMenu.LoadHighscore();
+                
+                if (highscore > 0)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.SetCursorPosition(offset.x + 12, offset.y + 10);
+                    Console.WriteLine($"Your Current Highscore is {highscore}.");
+                }
+
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine("");
                 Console.WriteLine("Controls: ");

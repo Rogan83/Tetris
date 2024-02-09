@@ -17,9 +17,11 @@ namespace Tetris
         static Tetromino tetro;
         static Tetromino nextTetro;
         static bool game = true;
-        static float speed = .5f;
-        static int heightEnvironment = 12;
-        public static int widthEnvironment = 6;        //mindestbreite = 6. 10 ist ein guter wert
+        private static float speed = .5f;
+        private static int speedShreshold = 10;
+
+        static int heightEnvironment = 20;
+        public static int widthEnvironment = 12;        //mindestbreite = 6. 10 ist ein guter wert
         static Vector2 offsetEnvironment = new Vector2(20, 3);
         static Vector2 offSetTetro = new Vector2(0, 5);
         internal static TetrisBoard tetrisBoard;
@@ -42,10 +44,9 @@ namespace Tetris
         internal static ConsoleColor PreviewFrameColor { get; set; } = ConsoleColor.DarkYellow;
 
 
-        public static int Points { get; set; }
+        public static int Score { get; set; }
         public static int DeletedRowsTotal { get; set; }
 
-        private static int speedShreshold = 1;
         private static Vector2 offsetPoints = new Vector2(0, 0);
 
         // braucht man nur für die alternative input variante
@@ -55,14 +56,11 @@ namespace Tetris
         #endregion
         static void Main()
         {
-            #region Initialisieren
-            Init(true);
-            #endregion
+            Init();
 
-            bool gameLoop = true;
-            while (gameLoop)
+            while (true)
             {
-                if (!game)
+                if (!game)      // Wenn das Spiel vorbei ist
                 {
                     if (Console.ReadKey(true).Key == ConsoleKey.R)
                     {
@@ -74,7 +72,7 @@ namespace Tetris
                     }
                     else if (Console.ReadKey(true).Key == ConsoleKey.Escape)
                     {
-                        gameLoop = false;
+                        return;
                     }
                 }
             }
@@ -83,7 +81,7 @@ namespace Tetris
         /// Initialsiert die Startwerte, rendert den Hintergrund und wählt ein zufälliges start Tetro und ein zufälliges 
         /// Tetro aus, welches als nächstes erscheinen wird.
         /// </summary>
-        private static void Init(bool showStartScreen)
+        private static void Init(bool showStartScreen = true)
         {
             Console.BufferHeight = 70;
             Console.CursorVisible = false;
@@ -113,7 +111,7 @@ namespace Tetris
         private static void Reset()
         {
             speed = .5f;
-            Points = 0;
+            Score = 0;
             DeletedRowsTotal = 0;
         }
 
@@ -358,7 +356,7 @@ namespace Tetris
                     SaveNewCollider();                      //Speicher die Pos vom neuen Tetro ab
                     int deletedRows = CheckAndClearLines();    //Überprüft, ob eine Linie vollständig ist und löscht diese dann, wenn dies der Fall ist.
                                                             //Gibt die Anzahl der gelöschten Zeilen zurück, welche benötigt wird, um die Punkte zu berechnen
-                    Points += CalculatePoints(deletedRows);
+                    Score += CalculatePoints(deletedRows);
                     IncreaseSpeed(deletedRows);
                     timerTetroMoveDown.Dispose();
                     timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, (int)(500 / speed));
@@ -616,7 +614,7 @@ namespace Tetris
             static void RenderNewInfos()
             {
                 Console.SetCursorPosition(offsetPoints.x, offsetPoints.y);
-                Console.WriteLine($"Points: {Points}");
+                Console.WriteLine($"Points: {Score}");
                 Console.WriteLine($"Level: {speed * 2}");
                 Console.WriteLine($"Rows left until level up: {speedShreshold - DeletedRowsTotal}");
             }
