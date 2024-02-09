@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -107,5 +108,47 @@ namespace Tetris.Figures
         }
 
         public virtual void Rotate(int rotation) { }
+        /// <summary>
+        /// Eine Vorschau darstellen, welches Element als nächstes erwartet wird
+        /// </summary>
+        public virtual void RenderPreview()
+        {
+            Console.SetCursorPosition(Program.PrevievPos.x, Program.PrevievPos.y - 2);
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("Next:");
+            Clear();
+            RenderFrame();
+
+            void RenderFrame()
+            {
+                // Rahmen von der Vorschau Rendern
+                for (int y = 0; y < Program.PreviewFrameSize.y; y++)
+                {
+                    for (int x = 0; x < Program.PreviewFrameSize.x; x++)
+                    {
+
+                        if ((y == 0 || y == Program.PreviewFrameSize.y - 1) ||
+                            (x == 0 || x == Program.PreviewFrameSize.x - 1))
+                        {
+                            Console.SetCursorPosition(Program.PrevievPos.x + x, Program.PrevievPos.y + y);
+                            Console.ForegroundColor = Program.PreviewFrameColor;
+                            Console.WriteLine("*");
+                        }
+                    }
+                }
+            }
+
+            static void Clear()
+            {
+                for (int y = 0; y < Program.PreviewFrameSize.y; y++)
+                {
+                    for (int x = 0; x < Program.PreviewFrameSize.x; x++)
+                    {
+                        Console.SetCursorPosition(Program.PrevievPos.x + x, Program.PrevievPos.y + y);
+                        Console.WriteLine(" ");
+                    }
+                }
+            }
+        }
     }
 }

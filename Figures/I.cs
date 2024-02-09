@@ -73,5 +73,32 @@ namespace Tetris.Figures
                     break;
             }
         }
+
+        public override void RenderPreview()
+        {
+            base.RenderPreview();
+
+            RenderTetroPreview();
+
+            void RenderTetroPreview()
+            {
+                //   #
+                //   #
+                //   #
+                //   #
+
+                Console.ForegroundColor = tetroColor;
+                Vector2 startPos = new Vector2(Program.PrevievPos.x + 2, Program.PrevievPos.y + 2);
+
+                Console.SetCursorPosition(startPos.x, startPos.y);
+                Console.WriteLine("#");
+                Console.SetCursorPosition(startPos.x, startPos.y + 1);
+                Console.WriteLine("#");
+                Console.SetCursorPosition(startPos.x, startPos.y + 2);
+                Console.WriteLine("#");
+                Console.SetCursorPosition(startPos.x, startPos.y + 3);
+                Console.WriteLine("#");
+            }
+        }
     }
 }

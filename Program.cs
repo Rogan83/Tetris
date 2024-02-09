@@ -12,11 +12,12 @@ namespace Tetris
     public class Program
     {
         static object lockObject = new object();
-        static Tetromino t;
+        static Tetromino tetro;
+        static Tetromino nextTetro;
         static bool game = true;
         static int speed = 1;
-        static int heightEnvironment = 14;
-        public static int widthEnvironment = 6;        //mindestbreite = 6
+        static int heightEnvironment = 18;
+        public static int widthEnvironment = 10;        //mindestbreite = 6
         static Vector2 offsetEnvironment = new Vector2(20, 3);
         static Vector2 offSetTetro = new Vector2(0, 5);
         internal static TetrisBoard tetrisBoard;
@@ -32,6 +33,12 @@ namespace Tetris
         //Eigenschaften fürs blinken, wenn Reihe(n) gelöscht wurden
         static int blinkCount = 3;
         static int blinkSpeed = 200;
+
+        //Eigenschaften von der Tetro Vorschau
+        internal static Vector2 PrevievPos { get; set; } = new Vector2(offsetEnvironment.x + widthEnvironment + 5, offsetEnvironment.y + offSetTetro.y);
+        internal static Vector2 PreviewFrameSize { get; set; } = new(7, 8);
+        internal static ConsoleColor PreviewFrameColor { get; set; } = ConsoleColor.White;
+
 
         public static int Points { get; set; }
         public static int DeletedRowsTotal { get; set; }
@@ -53,10 +60,17 @@ namespace Tetris
 
             tetrisBoard = new(heightEnvironment, widthEnvironment, enviromentColor);
 
+            //Initialisieren
             InitAndRenderEnvironment();
             RenderInfos();
-            RandomTetro();
+
+            tetro = RandomTetro();
+            nextTetro = RandomTetro();
+            // Todo: nächstes Tetro als Vorschau darstellen
+            nextTetro.RenderPreview();
+
             RandomPosition();   // Verschiebt das neue generierte Tetro zufällig in der X-Achse. Dabei darf das Tetro nicht weiter rechts spawnen als die breite zulässt
+            ///
 
             if (speed != 0)
                 timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, (int)(1000 / speed));
@@ -91,7 +105,7 @@ namespace Tetris
         static void RandomPosition()
         {
             smallestNumb = 0;
-            biggestNumb = widthEnvironment - t.width - 1;
+            biggestNumb = widthEnvironment - tetro.width - 1;
             xPos = 1;
             if (biggestNumb >= smallestNumb)
                 xPos = random.Next(smallestNumb, biggestNumb);
@@ -101,7 +115,7 @@ namespace Tetris
                 return;
             }
 
-            t.Move(new Vector2(xPos, 0));
+            tetro.Move(new Vector2(xPos, 0));
         }
 
         static void OnTimerTetroMoveDownElapsed()
@@ -114,15 +128,10 @@ namespace Tetris
 
                 if (isCollide)
                 {
-                    isCollide = false;
-                    RandomTetro();
-                    //int r = new Random().Next(1, widthEnvironment - t.width);
-                    //t.Move(new Vector2(r, 0));
-                    RandomPosition();
+                    isCollide = SpawnNewTetro(isCollide);
                 }
 
                 RenderElement();
-
             }
         }
 
@@ -200,7 +209,6 @@ namespace Tetris
 
             // Durch die While Schleife werden nacheinander alle Elemente von der Queue zugewiesen und am Ende bleibt nur das letzte Element übrig (deswegen der Name "lagestKeyPress")
 
-
             ConsoleKeyInfo latestKeyPress = new ConsoleKeyInfo();
 
             while (Console.KeyAvailable)
@@ -240,28 +248,38 @@ namespace Tetris
 
                 if (isCollide)
                 {
-                    isCollide = false;
-                    RandomTetro();
-                    //int r = new Random().Next(1, widthEnvironment - t.width);
-                    //t.Move(new Vector2(r, 0));
-                    RandomPosition();
+                    isCollide = SpawnNewTetro(isCollide);
                 }
 
                 RenderElement();
             }
 
+            
+
             void Turn(int dir)
             {
                 DeleteTetro();
-                t.Turn(dir);
+                tetro.Turn(dir);
                 RenderElement();
             }
         }
 
-        static void RandomTetro()
+        static bool SpawnNewTetro(bool isCollide)
         {
-            //int randomTetro = new Random().Next(0, 7);
-            int randomTetro = new Random().Next(0, 1);
+            isCollide = false;
+            tetro = nextTetro;
+            nextTetro = RandomTetro();
+            nextTetro.RenderPreview();
+            RandomPosition();
+
+            return isCollide;
+        }
+
+        static Tetromino RandomTetro()
+        {
+            int randomTetro = new Random().Next(0, 7);
+            //int randomTetro = new Random().Next(5, 6);
+            Tetromino t;
 
             switch (randomTetro)
             {
@@ -290,14 +308,15 @@ namespace Tetris
                     t = new S();
                     break;
             }
+            return t;
         }
 
         static bool UpdateGame(Vector2 move)
         {
-            Vector2 targetPos1 = Vector2.AddVector(t.endPos1, move);
-            Vector2 targetPos2 = Vector2.AddVector(t.endPos2, move);
-            Vector2 targetPos3 = Vector2.AddVector(t.endPos3, move);
-            Vector2 targetPos4 = Vector2.AddVector(t.endPos4, move);
+            Vector2 targetPos1 = Vector2.AddVector(tetro.endPos1, move);
+            Vector2 targetPos2 = Vector2.AddVector(tetro.endPos2, move);
+            Vector2 targetPos3 = Vector2.AddVector(tetro.endPos3, move);
+            Vector2 targetPos4 = Vector2.AddVector(tetro.endPos4, move);
 
            
             if (tetrisBoard.Grid[targetPos1.y][targetPos1.x].isCollided == false &&
@@ -305,13 +324,13 @@ namespace Tetris
                  tetrisBoard.Grid[targetPos3.y][targetPos3.x].isCollided == false &&
                  tetrisBoard.Grid[targetPos4.y][targetPos4.x].isCollided == false)
             {
-                t.Move(move);
+                tetro.Move(move);
                 return false;
             }
             else if (move.y == 1)
             {
                 // Wenn das Tetro mit dem Boden kollidiert ist und die Position vom ersten Element vom Tetro über das Spielfeld befindet, dann soll das Spiel beendet werden.
-                if (t.endPos1.y < offSetTetro.y)
+                if (tetro.endPos1.y < offSetTetro.y)
                 {
                     game = false;
                     timerTetroMoveDown.Dispose();
@@ -341,10 +360,10 @@ namespace Tetris
 
             static void SaveNewCollider()
             {
-                tetrisBoard.Grid[t.endPos1.y][t.endPos1.x] = new Collider(true, t.tetroColor);
-                tetrisBoard.Grid[t.endPos2.y][t.endPos2.x] = new Collider(true, t.tetroColor);
-                tetrisBoard.Grid[t.endPos3.y][t.endPos3.x] = new Collider(true, t.tetroColor);
-                tetrisBoard.Grid[t.endPos4.y][t.endPos4.x] = new Collider(true, t.tetroColor);
+                tetrisBoard.Grid[tetro.endPos1.y][tetro.endPos1.x] = new Collider(true, tetro.tetroColor);
+                tetrisBoard.Grid[tetro.endPos2.y][tetro.endPos2.x] = new Collider(true, tetro.tetroColor);
+                tetrisBoard.Grid[tetro.endPos3.y][tetro.endPos3.x] = new Collider(true, tetro.tetroColor);
+                tetrisBoard.Grid[tetro.endPos4.y][tetro.endPos4.x] = new Collider(true, tetro.tetroColor);
 
                 RenderElement();
             }
@@ -588,43 +607,43 @@ namespace Tetris
 
         static void RenderElement()
         {
-            if (t.isDead)
+            if (tetro.isDead)
             {
                 return;
             }
 
-            Console.ForegroundColor = t.tetroColor;
+            Console.ForegroundColor = tetro.tetroColor;
 
-            Console.SetCursorPosition(t.endPos1.x + offsetEnvironment.x, t.endPos1.y + offsetEnvironment.y);
+            Console.SetCursorPosition(tetro.endPos1.x + offsetEnvironment.x, tetro.endPos1.y + offsetEnvironment.y);
             Console.Write("#");
-            Console.SetCursorPosition(t.endPos2.x + offsetEnvironment.x, t.endPos2.y + offsetEnvironment.y);
+            Console.SetCursorPosition(tetro.endPos2.x + offsetEnvironment.x, tetro.endPos2.y + offsetEnvironment.y);
             Console.Write("#");
-            Console.SetCursorPosition(t.endPos3.x + offsetEnvironment.x, t.endPos3.y + offsetEnvironment.y);
+            Console.SetCursorPosition(tetro.endPos3.x + offsetEnvironment.x, tetro.endPos3.y + offsetEnvironment.y);
             Console.Write("#");
-            Console.SetCursorPosition(t.endPos4.x + offsetEnvironment.x, t.endPos4.y + offsetEnvironment.y);
+            Console.SetCursorPosition(tetro.endPos4.x + offsetEnvironment.x, tetro.endPos4.y + offsetEnvironment.y);
             Console.Write("#");
         }
 
         static void DeleteTetro()
         {
-            if (t.endPos1 != null)
+            if (tetro.endPos1 != null)
             {
-                Console.SetCursorPosition(t.endPos1.x + offsetEnvironment.x, t.endPos1.y + offsetEnvironment.y);
+                Console.SetCursorPosition(tetro.endPos1.x + offsetEnvironment.x, tetro.endPos1.y + offsetEnvironment.y);
                 Console.Write(" ");
             }
-            if (t.endPos2 != null)
+            if (tetro.endPos2 != null)
             {
-                Console.SetCursorPosition(t.endPos2.x + offsetEnvironment.x, t.endPos2.y + offsetEnvironment.y);
+                Console.SetCursorPosition(tetro.endPos2.x + offsetEnvironment.x, tetro.endPos2.y + offsetEnvironment.y);
                 Console.Write(" ");
             }
-            if (t.endPos3 != null)
+            if (tetro.endPos3 != null)
             {
-                Console.SetCursorPosition(t.endPos3.x + offsetEnvironment.x, t.endPos3.y + offsetEnvironment.y);
+                Console.SetCursorPosition(tetro.endPos3.x + offsetEnvironment.x, tetro.endPos3.y + offsetEnvironment.y);
                 Console.Write(" ");
             }
-            if (t.endPos4 != null)
+            if (tetro.endPos4 != null)
             {
-                Console.SetCursorPosition(t.endPos4.x + offsetEnvironment.x, t.endPos4.y + offsetEnvironment.y);
+                Console.SetCursorPosition(tetro.endPos4.x + offsetEnvironment.x, tetro.endPos4.y + offsetEnvironment.y);
                 Console.Write(" ");
             }
         }
