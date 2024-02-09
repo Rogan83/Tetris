@@ -14,7 +14,7 @@ namespace Tetris
         static object lockObject = new object();
         static Tetromino t;
         static bool game = true;
-        static float speed = 1;
+        static int speed = 1;
         static int heightEnvironment = 14;
         public static int widthEnvironment = 6;        //mindestbreite = 6
         static Vector2 offsetEnvironment = new Vector2(20, 3);
@@ -33,7 +33,11 @@ namespace Tetris
         static int blinkCount = 3;
         static int blinkSpeed = 200;
 
-        public int Points { get; set; }
+        public static int Points { get; set; }
+        public static int DeletedRowsTotal { get; set; }
+
+        private static int speedShreshold = 10;
+        private static Vector2 offsetPoints = new Vector2(0, 0);
 
         // braucht man nur für die alternative input variante
         //[DllImport("user32.dll")]
@@ -50,7 +54,7 @@ namespace Tetris
             tetrisBoard = new(heightEnvironment, widthEnvironment, enviromentColor);
 
             InitAndRenderEnvironment();
-
+            RenderInfos();
             RandomTetro();
             RandomPosition();   // Verschiebt das neue generierte Tetro zufällig in der X-Achse. Dabei darf das Tetro nicht weiter rechts spawnen als die breite zulässt
 
@@ -256,8 +260,8 @@ namespace Tetris
 
         static void RandomTetro()
         {
-            int randomTetro = new Random().Next(0, 7);
-            //int randomTetro = new Random().Next(0, 2);
+            //int randomTetro = new Random().Next(0, 7);
+            int randomTetro = new Random().Next(0, 1);
 
             switch (randomTetro)
             {
@@ -318,9 +322,10 @@ namespace Tetris
                 else
                 {
                     SaveNewCollider();                      //Speicher die Pos vom neuen Tetro ab
-                    int rowCount = CheckAndClearLines();    //Überprüft, ob eine Linie vollständig ist und löscht diese dann, wenn dies der Fall ist.
+                    int deletedRows = CheckAndClearLines();    //Überprüft, ob eine Linie vollständig ist und löscht diese dann, wenn dies der Fall ist.
                                                             //Gibt die Anzahl der gelöschten Zeilen zurück, welche benötigt wird, um die Punkte zu berechnen
-
+                    Points += CalculatePoints(deletedRows);
+                    IncreaseSpeed(deletedRows);
                     RenderAll();                            // Rendert alles neu
 
                     return true;
@@ -336,11 +341,6 @@ namespace Tetris
 
             static void SaveNewCollider()
             {
-                //collider[t.endPos1.x, t.endPos1.y] = new Collider(true, t.tetroColor);
-                //collider[t.endPos2.x, t.endPos2.y] = new Collider(true, t.tetroColor);
-                //collider[t.endPos3.x, t.endPos3.y] = new Collider(true, t.tetroColor);
-                //collider[t.endPos4.x, t.endPos4.y] = new Collider(true, t.tetroColor);
-
                 tetrisBoard.Grid[t.endPos1.y][t.endPos1.x] = new Collider(true, t.tetroColor);
                 tetrisBoard.Grid[t.endPos2.y][t.endPos2.x] = new Collider(true, t.tetroColor);
                 tetrisBoard.Grid[t.endPos3.y][t.endPos3.x] = new Collider(true, t.tetroColor);
@@ -451,8 +451,6 @@ namespace Tetris
                     timerTetroMoveDown.Change(0, (int)(1000 / speed));  // timer wieder starten
                 }
 
-
-
                 return linesToClear.Count;
 
                 void InitEnviroment()
@@ -497,6 +495,40 @@ namespace Tetris
                 }
             }
 
+            static int CalculatePoints(int deletedRowAmount)
+            {
+                int pointFactor = 0;
+                switch (deletedRowAmount)
+                {
+                    case 1:
+                        pointFactor = 40;
+                        break;
+                    case 2:
+                        pointFactor = 100;
+                        break;
+                    case 3:
+                        pointFactor = 300;
+                        break;
+                    case 4:
+                        pointFactor = 1200;
+                        break;
+                    default:
+                        break;
+                }
+                return pointFactor * speed;
+            }
+            
+            static void IncreaseSpeed(int deletedRows)
+            {
+                DeletedRowsTotal += deletedRows;
+
+                if (DeletedRowsTotal >= speedShreshold)
+                {
+                    DeletedRowsTotal = 0;
+                    speed++;
+                }
+            }
+
             static void RenderAll()
             {
                 // Render die Umgebung inkl. Tetros (mit den richtigen Farben) erneut
@@ -525,6 +557,32 @@ namespace Tetris
 
                     }
                 }
+
+                RenderInfos();
+            }
+        }
+        /// <summary>
+        /// Zeigt alle Infos an wie Punkte, Level etc. 
+        /// </summary>
+        static void RenderInfos()
+        {
+            ClearOldInfos();
+            RenderNewInfos();
+
+            static void ClearOldInfos()
+            {
+                Console.SetCursorPosition(offsetPoints.x, offsetPoints.y);
+                Console.WriteLine("                                                                                       ");
+                Console.WriteLine("                                                                                       ");
+                Console.WriteLine("                                                                                       ");
+            }
+
+            static void RenderNewInfos()
+            {
+                Console.SetCursorPosition(offsetPoints.x, offsetPoints.y);
+                Console.WriteLine($"Punkte: {Points}");
+                Console.WriteLine($"Level: {speed}");
+                Console.WriteLine($"fehlende Zeilen bis nächstes Level: {speedShreshold - DeletedRowsTotal}");
             }
         }
 
