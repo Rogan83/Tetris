@@ -12,7 +12,6 @@ namespace Tetris.Menus
         private static int pulseSpeed = 1;
         static Timer pulse;
         static object lockObject = new object();
-        static bool toggleColor = false;
         internal static void ShowStartScreen()
         {
             pulse = new Timer(_ => OnTimerPulseElapsed(), null, 0, 1000 / pulseSpeed);
@@ -27,16 +26,35 @@ namespace Tetris.Menus
         {
             lock (lockObject)
             {
-                if (toggleColor)
-                {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                }
+                int randomColorIndex = new Random().Next(0, 7);
 
-                toggleColor = !toggleColor;
+                switch (randomColorIndex)
+                {
+                    case 0:
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        break;
+                    case 1:
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        break;
+                    case 2:
+                        Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                        break;
+                    case 3:
+                        Console.ForegroundColor = ConsoleColor.DarkBlue;
+                        break;
+                    case 4:
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        break;
+                    case 5:
+                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        break;
+                    case 6:
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        break;
+                    default:
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        break;
+                }
 
                 Console.SetCursorPosition(offset.x, offset.y);
                 Console.WriteLine(" _______   ______   _______   _____      _____    _____ ");
