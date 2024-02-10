@@ -26,7 +26,7 @@ namespace Tetris
         static Vector2 offSetTetro = new Vector2(0, 5);
         internal static TetrisBoard tetrisBoard;
 
-        static Timer timerTetroMoveDown, timerCheckInput;
+        static Timer timerTetroMoveDown, timerCheckInput, timerCheckPause;
         static bool isCollide = false;
 
         static int smallestNumb, biggestNumb, xPos;
@@ -57,9 +57,11 @@ namespace Tetris
         static void Main()
         {
             Init();
-
+            
             while (true)
             {
+                
+
                 if (!game)      // Wenn das Spiel vorbei ist
                 {
                     if (Console.ReadKey(true).Key == ConsoleKey.R)
@@ -104,6 +106,7 @@ namespace Tetris
                 timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, 0);
 
             timerCheckInput = new Timer(_ => OnTimerCheckInputElapsed(), null, 0, 10);
+            //timerCheckPause = new Timer(_ => OnTimerCheckPauseElapsed(), null, 0, 10);
         }
         /// <summary>
         /// Resettet alle Werte
@@ -155,6 +158,38 @@ namespace Tetris
                 HandleInput();
             }
         }
+
+
+        //static void OnTimerCheckPauseElapsed()
+        //{
+        //    lock (lockObject)
+        //    {
+        //        if (Console.KeyAvailable)
+        //        {
+        //            ConsoleKeyInfo keyPress = Console.ReadKey(true); // true, um die Eingabe nicht anzuzeigen
+
+        //            if (keyPress.Key == ConsoleKey.Spacebar)
+        //            {
+        //                isPaused = !isPaused;
+
+        //                if (isPaused)
+        //                {
+        //                    // Wenn pausiert, Timer deaktivieren
+        //                    timerTetroMoveDown.Change(Timeout.Infinite, Timeout.Infinite);
+        //                    timerCheckInput.Change(Timeout.Infinite, Timeout.Infinite);
+        //                }
+        //                else
+        //                {
+        //                    // Wenn fortgesetzt wird, Timer wieder starten
+        //                    timerTetroMoveDown.Change(0, (int)(500 / speed));
+        //                    timerCheckInput.Change(0, 10);
+        //                }
+
+
+        //            }
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// alte Implementierung
@@ -210,7 +245,7 @@ namespace Tetris
         //        RenderElement();
         //    }
         //}
-
+        static bool isPaused = false;
         static void HandleInput()
         {
             // Es gibt einen Mechanismus, bei dem die Betriebssystemtastaturpuffer abgefragt werden, um zu sehen, welche Tasten gedrückt sind. Console.KeyAvailable prüft, ob es Tasten im Puffer gibt,
@@ -249,6 +284,9 @@ namespace Tetris
                     case ConsoleKey.W:
                         Turn(1);
                         break;
+                    case ConsoleKey.Spacebar:
+                        TogglePause();
+                        break;
                     default:
                         break;
                 }
@@ -256,6 +294,8 @@ namespace Tetris
 
             void Move(int x, int y)
             {
+                if (isPaused) { return; }       //Wenn das Spiel pausiert ist, dann führe die Bewegungn nicht aus
+
                 DeleteTetro();
                 isCollide = UpdateGame(new Vector2(x, y));
 
@@ -267,14 +307,38 @@ namespace Tetris
                 RenderElement();
             }
 
-            
-
             void Turn(int dir)
             {
+                if (isPaused) { return; }       //Wenn das Spiel pausiert ist, dann führe die Bewegungn nicht aus
+
                 DeleteTetro();
                 tetro.Turn(dir);
                 RenderElement();
             }
+            // wenn die space Taste gedrückt wird, wird pausiert und wenn diese erneut gedrückt wird, wird das Spiel fortgesetzt.
+            static void TogglePause()
+            {
+                isPaused = !isPaused;
+                Vector2 pos = new Vector2(0, 4);
+
+                if (isPaused)
+                {
+                    // Wenn pausiert, Timer deaktivieren
+                    Console.SetCursorPosition(pos.x, pos.y);
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    Console.WriteLine("Pause");
+
+                    timerTetroMoveDown.Change(Timeout.Infinite, Timeout.Infinite);
+                }
+                else
+                {
+                    // Wenn fortgesetzt wird, Timer wieder starten
+                    Console.SetCursorPosition(pos.x, pos.y);
+                    Console.WriteLine("          ");
+                    timerTetroMoveDown.Change(0, (int)(500 / speed));
+                }
+            }
+
         }
 
         static bool SpawnNewTetro(bool isCollide)

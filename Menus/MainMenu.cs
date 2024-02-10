@@ -9,7 +9,7 @@ namespace Tetris.Menus
     static internal class MainMenu
     {
         private static Vector2 offset = new(10, 3);
-        private static int pulseSpeed = 2;
+        private static int pulseSpeed = 1;
         static Timer pulse;
         static object lockObject = new object();
         static bool toggleColor = false;
@@ -68,8 +68,9 @@ namespace Tetris.Menus
                 Console.WriteLine("");
                 Console.WriteLine("Controls: ");
                 Console.WriteLine("");
-                Console.WriteLine("To Move, press  A S D  OR  Arrow Keys");
-                Console.WriteLine("To Rotate, press W  OR  Arrow up");
+                Console.WriteLine("To Move, press  A, S, D  OR  the Arrow Keys");
+                Console.WriteLine("To Rotate, press W  OR the Arrow up Key");
+                Console.WriteLine("To Pause, press the spacebar. Press the spacebar again, to continue the game.");
                 Console.WriteLine(" ");
                 Console.WriteLine(" ");
                 Console.WriteLine("Made by Daniel Rothweiler");
