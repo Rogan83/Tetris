@@ -1,7 +1,9 @@
-﻿using System;
+﻿using NAudio.Wave;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Media;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
@@ -106,8 +108,15 @@ namespace Tetris.Figures
 
             CalculateEndPositions();
         }
+        public virtual void Rotate(int rotation, bool enableSound = true)
+        {
+            if (enableSound)
+            {
+                Audio.Play("Sounds/Rotate.mp3");
+            }
+        }
 
-        public virtual void Rotate(int rotation) { }
+        
         /// <summary>
         /// Eine Vorschau darstellen, welches Element als nächstes erwartet wird
         /// </summary>

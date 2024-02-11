@@ -21,18 +21,18 @@ namespace Tetris
         private static int speedShreshold = 10;
 
         static int heightEnvironment = 20;
-        public static int widthEnvironment = 12;        //mindestbreite = 6. 10 ist ein guter wert
+        public static int widthEnvironment = 6;        //mindestbreite = 6. 12 ist ein guter wert (10 spielbreite + 2 für die wände sind beim Originaltetris der Fall)
         static Vector2 offsetEnvironment = new Vector2(20, 3);
         static Vector2 offSetTetro = new Vector2(0, 5);
         internal static TetrisBoard tetrisBoard;
 
-        static Timer timerTetroMoveDown, timerCheckInput, timerCheckPause;
+        static Timer timerTetroMoveDown, timerCheckInput;
         static bool isCollide = false;
 
         static int smallestNumb, biggestNumb, xPos;
         static Random random = new Random();
 
-        static ConsoleColor enviromentColor = ConsoleColor.Gray;
+        const ConsoleColor enviromentColor = ConsoleColor.Gray;
 
         //Eigenschaften fürs blinken, wenn Reihe(n) gelöscht wurden
         static int blinkCount = 3;
@@ -60,11 +60,9 @@ namespace Tetris
             
             while (true)
             {
-                
-
-                if (!game)      // Wenn das Spiel vorbei ist
+                if (!game)                                                      // Wenn das Spiel vorbei ist
                 {
-                    if (Console.ReadKey(true).Key == ConsoleKey.R)
+                    if (Console.ReadKey(true).Key == ConsoleKey.R)              // Starte das Spiel neu, ohne das Hauptmenü zu laden
                     {
                         game = true;
                         Console.Clear();
@@ -72,7 +70,7 @@ namespace Tetris
                         Init(false);
                         continue;
                     }
-                    else if (Console.ReadKey(true).Key == ConsoleKey.Escape)
+                    else if (Console.ReadKey(true).Key == ConsoleKey.Escape)    // Beende das Spiel
                     {
                         return;
                     }
@@ -106,7 +104,6 @@ namespace Tetris
                 timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, 0);
 
             timerCheckInput = new Timer(_ => OnTimerCheckInputElapsed(), null, 0, 10);
-            //timerCheckPause = new Timer(_ => OnTimerCheckPauseElapsed(), null, 0, 10);
         }
         /// <summary>
         /// Resettet alle Werte
@@ -158,38 +155,6 @@ namespace Tetris
                 HandleInput();
             }
         }
-
-
-        //static void OnTimerCheckPauseElapsed()
-        //{
-        //    lock (lockObject)
-        //    {
-        //        if (Console.KeyAvailable)
-        //        {
-        //            ConsoleKeyInfo keyPress = Console.ReadKey(true); // true, um die Eingabe nicht anzuzeigen
-
-        //            if (keyPress.Key == ConsoleKey.Spacebar)
-        //            {
-        //                isPaused = !isPaused;
-
-        //                if (isPaused)
-        //                {
-        //                    // Wenn pausiert, Timer deaktivieren
-        //                    timerTetroMoveDown.Change(Timeout.Infinite, Timeout.Infinite);
-        //                    timerCheckInput.Change(Timeout.Infinite, Timeout.Infinite);
-        //                }
-        //                else
-        //                {
-        //                    // Wenn fortgesetzt wird, Timer wieder starten
-        //                    timerTetroMoveDown.Change(0, (int)(500 / speed));
-        //                    timerCheckInput.Change(0, 10);
-        //                }
-
-
-        //            }
-        //        }
-        //    }
-        //}
 
         /// <summary>
         /// alte Implementierung
@@ -324,8 +289,8 @@ namespace Tetris
                 if (isPaused)
                 {
                     // Wenn pausiert, Timer deaktivieren
+                    InitAndRenderEnvironment(ConsoleColor.Cyan);
                     Console.SetCursorPosition(pos.x, pos.y);
-                    Console.ForegroundColor = ConsoleColor.DarkGreen;
                     Console.WriteLine("Pause");
 
                     timerTetroMoveDown.Change(Timeout.Infinite, Timeout.Infinite);
@@ -333,6 +298,7 @@ namespace Tetris
                 else
                 {
                     // Wenn fortgesetzt wird, Timer wieder starten
+                    InitAndRenderEnvironment();
                     Console.SetCursorPosition(pos.x, pos.y);
                     Console.WriteLine("          ");
                     timerTetroMoveDown.Change(0, (int)(500 / speed));
@@ -354,8 +320,8 @@ namespace Tetris
 
         static Tetromino RandomTetro()
         {
-            int randomTetro = new Random().Next(0, 7);
-            //int randomTetro = new Random().Next(5, 6);
+            //int randomTetro = new Random().Next(0, 7);
+            int randomTetro = new Random().Next(0, 1);
             Tetromino t;
 
             switch (randomTetro)
@@ -462,7 +428,18 @@ namespace Tetris
                         linesToClear.Add(row);
                     }
                 }
-                //bool firstRowRemoved = false;
+                
+
+                if (linesToClear.Count > 0 && linesToClear.Count < 4)
+                {
+                    Audio.Play("Sounds/DeleteRow.mp3");
+                }
+                else if (linesToClear.Count == 4)
+                {
+                    Audio.Play("Sounds/Delete4Rows.mp3");
+                }
+
+
                 #region alternativesLöschen
                 // Lösche die vollständigen Zeilen und füge neue leere Zeilen oben hinzu
                 //foreach (int row in linesToClear)
@@ -729,20 +706,20 @@ namespace Tetris
         /// <summary>
         ///  Speichert die Umgebung und rendert diese
         /// </summary>
-        static void InitAndRenderEnvironment()
+        static void InitAndRenderEnvironment(ConsoleColor color = enviromentColor)
         {
-            Console.ForegroundColor = enviromentColor;
+            Console.ForegroundColor = color;
             for (int i = 0; i < heightEnvironment; i++)
             {
                 Console.SetCursorPosition(offsetEnvironment.x, i + offsetEnvironment.y);
                 //collider[0, i] = new Collider(true, ConsoleColor.White);
-                tetrisBoard.Grid[i][0] = new Collider(true, enviromentColor);
+                tetrisBoard.Grid[i][0] = new Collider(true, color);
                 if (i >= offSetTetro.y)
                     Console.Write("|");
 
                 Console.SetCursorPosition(widthEnvironment - 1 + offsetEnvironment.x, i + offsetEnvironment.y);
                 //collider[widthEnvironment - 1, i] = new Collider(true, ConsoleColor.White);
-                tetrisBoard.Grid[i][widthEnvironment - 1] = new Collider(true, enviromentColor);
+                tetrisBoard.Grid[i][widthEnvironment - 1] = new Collider(true, color);
                 if (i >= offSetTetro.y)
                     Console.Write("|");
             }
@@ -751,9 +728,10 @@ namespace Tetris
             {
                 Console.SetCursorPosition(i + offsetEnvironment.x, heightEnvironment - 1 + offsetEnvironment.y);
                 //collider[i, heightEnvironment - 1] = new Collider(true, ConsoleColor.White);
-                tetrisBoard.Grid[heightEnvironment - 1][i] = new Collider(true, enviromentColor);
+                tetrisBoard.Grid[heightEnvironment - 1][i] = new Collider(true, color);
                 Console.Write("-");
             }
+            Console.SetCursorPosition(0, 0);
             //Debug
             //for (int x = 0; x < widthEnvironment; x++)
             //{

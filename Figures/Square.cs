@@ -55,6 +55,13 @@ namespace Tetris.Figures
                 Console.SetCursorPosition(startPos.x + 1, startPos.y + 1);
                 Console.WriteLine("#");
             }
+
+
+        }
+
+        public override void Rotate(int rot, bool enableSound = true)
+        {
+            base.Rotate(rot, enableSound);
         }
     }
 }

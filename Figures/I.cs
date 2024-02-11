@@ -24,7 +24,7 @@ namespace Tetris.Figures
 
         private void StartPos()
         {
-            Rotate(startRotation);
+            Rotate(startRotation, false);
         }
 
         public override void ResetPos()
@@ -33,8 +33,9 @@ namespace Tetris.Figures
             Rotate(startRotation);
         }
 
-        public override void Rotate(int rot)
+        public override void Rotate(int rot, bool enableSound = true)
         {
+            base.Rotate(rot, enableSound);
             switch (rot)
             {
                 case 1:
