@@ -20,7 +20,7 @@ namespace Tetris
         private static float speed = .5f;
         private static int speedShreshold = 10;
 
-        static int heightEnvironment = 20;
+        static int heightEnvironment = 10;              //höhe 18
         public static int widthEnvironment = 6;        //mindestbreite = 6. 12 ist ein guter wert (10 spielbreite + 2 für die wände sind beim Originaltetris der Fall)
         static Vector2 offsetEnvironment = new Vector2(20, 3);
         static Vector2 offSetTetro = new Vector2(0, 5);
@@ -64,6 +64,7 @@ namespace Tetris
                 {
                     if (Console.ReadKey(true).Key == ConsoleKey.R)              // Starte das Spiel neu, ohne das Hauptmenü zu laden
                     {
+                        Audio.Stop();
                         game = true;
                         Console.Clear();
                         Reset();
@@ -83,6 +84,7 @@ namespace Tetris
         /// </summary>
         private static void Init(bool showStartScreen = true)
         {
+            heightEnvironment += offSetTetro.y + 1;
             Console.BufferHeight = 70;
             Console.CursorVisible = false;
             tetrisBoard = new(heightEnvironment, widthEnvironment, enviromentColor);
@@ -428,7 +430,6 @@ namespace Tetris
                         linesToClear.Add(row);
                     }
                 }
-                
 
                 if (linesToClear.Count > 0 && linesToClear.Count < 4)
                 {
@@ -759,6 +760,11 @@ namespace Tetris
             //{
             //    Console.WriteLine("");
             //}
+
+            Audio.Play("Sounds/Dead.mp3");
+            Thread.Sleep(1000);
+            Audio.Play("Sounds/GameOver.mp3");
+            Thread.Sleep(2000);
 
             GameOverMenu.ShowGameOverScreen();
         }
