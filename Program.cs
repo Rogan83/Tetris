@@ -17,16 +17,16 @@ namespace Tetris
         static Tetromino tetro;
         static Tetromino nextTetro;
         static bool game = true;
-        private static float speed = .5f;
-        private static int speedShreshold = 10;
+        private static float speed = 1f;
+        private static int speedShreshold = 1;//10;
 
-        static int heightEnvironment = 10;              //höhe 18
+        static int heightEnvironment = 15;              //höhe 18
         public static int widthEnvironment = 6;        //mindestbreite = 6. 12 ist ein guter wert (10 spielbreite + 2 für die wände sind beim Originaltetris der Fall)
         static Vector2 offsetEnvironment = new Vector2(20, 3);
         static Vector2 offSetTetro = new Vector2(0, 5);
         internal static TetrisBoard tetrisBoard;
 
-        static Timer timerTetroMoveDown, timerCheckInput;
+        static Timer timerTetroMoveDown, timerCheckInput, timerReset;
         static bool isCollide = false;
 
         static int smallestNumb, biggestNumb, xPos;
@@ -84,7 +84,7 @@ namespace Tetris
         /// </summary>
         private static void Init(bool showStartScreen = true)
         {
-            heightEnvironment += offSetTetro.y + 1;
+            
             Console.BufferHeight = 70;
             Console.CursorVisible = false;
             tetrisBoard = new(heightEnvironment, widthEnvironment, enviromentColor);
@@ -101,11 +101,12 @@ namespace Tetris
             RandomPosition();   // Verschiebt das neue generierte Tetro zufällig in der X-Achse. Dabei darf das Tetro nicht weiter rechts spawnen als die breite zulässt
 
             if (speed != 0)
-                timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, (int)(500 / speed));
+                timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, (int)(1000 / speed));
             else
                 timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, 0);
 
             timerCheckInput = new Timer(_ => OnTimerCheckInputElapsed(), null, 0, 10);
+            
         }
         /// <summary>
         /// Resettet alle Werte
@@ -156,6 +157,11 @@ namespace Tetris
             {
                 HandleInput();
             }
+        }
+
+        static void OnTimerResetKeyElapsed()
+        {
+            keyPressed = false;
         }
 
         /// <summary>
@@ -212,7 +218,8 @@ namespace Tetris
         //        RenderElement();
         //    }
         //}
-        static bool isPaused = false;
+        static bool isPaused;
+        static bool keyPressed = false;
         static void HandleInput()
         {
             // Es gibt einen Mechanismus, bei dem die Betriebssystemtastaturpuffer abgefragt werden, um zu sehen, welche Tasten gedrückt sind. Console.KeyAvailable prüft, ob es Tasten im Puffer gibt,
@@ -223,6 +230,7 @@ namespace Tetris
             // der Tastatur ermöglicht. Diese Klasse stützt sich nicht auf den Puffermechanismus von Console.KeyAvailable.
 
             // Durch die While Schleife werden nacheinander alle Elemente von der Queue zugewiesen und am Ende bleibt nur das letzte Element übrig (deswegen der Name "lagestKeyPress")
+            
 
             ConsoleKeyInfo latestKeyPress = new ConsoleKeyInfo();
 
@@ -230,6 +238,7 @@ namespace Tetris
             {
                 latestKeyPress = Console.ReadKey(true); // true, um die Eingabe nicht anzuzeigen
             }
+            
 
             if (latestKeyPress.Key != 0) // Überprüfe, ob eine Taste gedrückt wurde
             {
@@ -249,7 +258,13 @@ namespace Tetris
                         break;
                     case ConsoleKey.UpArrow:
                     case ConsoleKey.W:
-                        Turn(1);
+                        if (!keyPressed)
+                        {
+                            keyPressed = true;
+                            Turn(1);
+                            timerReset?.Dispose();
+                            timerReset = new Timer(_ => OnTimerResetKeyElapsed(), null, 90, Timeout.Infinite);
+                        }
                         break;
                     case ConsoleKey.Spacebar:
                         TogglePause();
