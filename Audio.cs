@@ -10,26 +10,26 @@ namespace Tetris
 {
     // Todo: darauf eine "normale" Klasse machen, damit mehrere Instanzen dieser Klasse erstellt werden können
     // und somit auch mehrere Soundtracks parallel abgespielt werden können (z.B. Musik und Soundeffekte)
-    static internal class Audio
+    internal class Audio
     {
-        static object lockObject = new object();
-        static WaveOutEvent waveOut = new WaveOutEvent(); // Erstelle einen neuen WaveOutEvent
+        object lockObject = new object();
+        WaveOutEvent waveOut = new WaveOutEvent(); // Erstelle einen neuen WaveOutEvent
 
-        static Timer audioTimer;
-        static internal void Play(string path)
+        Timer audioTimer;
+        internal void Play(string path)
         {
             audioTimer?.Dispose();
             audioTimer = new Timer(_ => OnAudioTimerElapsed(path), null, 0, Timeout.Infinite);
         }
 
-        static internal void Stop()
+        internal void Stop()
         {
             audioTimer?.Dispose();
             waveOut.Stop();
         }
-        static bool isStartAgain = false;
-        static bool finish = false;
-        static void OnAudioTimerElapsed(string audioPath)
+        bool isStartAgain = false;
+        bool finish = false;
+        void OnAudioTimerElapsed(string audioPath)
         {
             lock (lockObject)
             {

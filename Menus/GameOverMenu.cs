@@ -51,7 +51,7 @@ namespace Tetris.Menus
             //Console.WriteLine("| | | |");
             //Console.WriteLine(" \\___/ ");
             #endregion
-            Audio.Play("Music/Music GameOver.mp3");
+            Program.music.Play("Music/Music GameOver.mp3");
 
             Console.Clear();
 

@@ -112,7 +112,7 @@ namespace Tetris.Figures
         {
             if (enableSound)
             {
-                Audio.Play("Sounds/Rotate.mp3");
+                Program.soundtrack.Play("Sounds/Rotate.mp3");
             }
         }
 

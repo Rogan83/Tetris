@@ -13,6 +13,10 @@ namespace Tetris
     public class Program
     {
         #region PropertiesAndFields
+
+        static internal Audio soundtrack {  get; set; }
+        static internal Audio music {  get; set; }
+
         static object lockObject = new object();
         static Tetromino tetro;
         static Tetromino nextTetro;
@@ -64,7 +68,7 @@ namespace Tetris
                 {
                     if (Console.ReadKey(true).Key == ConsoleKey.R)              // Starte das Spiel neu, ohne das Hauptmenü zu laden
                     {
-                        Audio.Stop();
+                        music.Stop();
                         game = true;
                         Console.Clear();
                         Reset();
@@ -84,7 +88,9 @@ namespace Tetris
         /// </summary>
         private static void Init(bool showStartScreen = true)
         {
-            
+            soundtrack = new();
+            music = new();
+
             Console.BufferHeight = 70;
             Console.CursorVisible = false;
             tetrisBoard = new(heightEnvironment, widthEnvironment, enviromentColor);
@@ -138,9 +144,13 @@ namespace Tetris
         {
             lock (lockObject)
             {
+                
                 DeleteTetro();
                 Vector2 moveDown = new Vector2(0, 1);
                 isCollide = UpdateGame(moveDown);
+
+                if (!game)
+                    return;
 
                 if (isCollide)
                 {
@@ -404,9 +414,10 @@ namespace Tetris
                     int deletedRows = CheckAndClearLines();    //Überprüft, ob eine Linie vollständig ist und löscht diese dann, wenn dies der Fall ist.
                                                             //Gibt die Anzahl der gelöschten Zeilen zurück, welche benötigt wird, um die Punkte zu berechnen
                     Score += CalculatePoints(deletedRows);
-                    IncreaseSpeed(deletedRows);
-                    timerTetroMoveDown.Dispose();
-                    timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, (int)(500 / speed));
+                    speed = IncreaseSpeed(deletedRows, speed);
+                    //Damit die neue geschwindigkeit gleich übernommen wird
+                    timerTetroMoveDown?.Dispose();
+                    timerTetroMoveDown = new Timer(_ => OnTimerTetroMoveDownElapsed(), null, 0, (int)(1000 / speed));
                     RenderAll();                            // Rendert alles neu
 
                     return true;
@@ -448,11 +459,11 @@ namespace Tetris
 
                 if (linesToClear.Count > 0 && linesToClear.Count < 4)
                 {
-                    Audio.Play("Sounds/DeleteRow.mp3");
+                    soundtrack.Play("Sounds/DeleteRow.mp3");
                 }
                 else if (linesToClear.Count == 4)
                 {
-                    Audio.Play("Sounds/Delete4Rows.mp3");
+                    soundtrack.Play("Sounds/Delete4Rows.mp3");
                 }
 
 
@@ -609,7 +620,7 @@ namespace Tetris
                 return pointFactor * (int)(speed * 2);
             }
             
-            static void IncreaseSpeed(int deletedRows)
+            static float IncreaseSpeed(int deletedRows, float speed)
             {
                 DeletedRowsTotal += deletedRows;
 
@@ -618,6 +629,7 @@ namespace Tetris
                     DeletedRowsTotal = 0;
                     speed += .5f;
                 }
+                return speed;
             }
 
             static void RenderAll()
@@ -776,9 +788,9 @@ namespace Tetris
             //    Console.WriteLine("");
             //}
 
-            Audio.Play("Sounds/Dead.mp3");
+            soundtrack.Play("Sounds/Dead.mp3");
             Thread.Sleep(1000);
-            Audio.Play("Sounds/GameOver.mp3");
+            soundtrack.Play("Sounds/GameOver.mp3");
             Thread.Sleep(2000);
 
             GameOverMenu.ShowGameOverScreen();
