@@ -16,10 +16,10 @@ namespace Tetris
         WaveOutEvent waveOut = new WaveOutEvent(); // Erstelle einen neuen WaveOutEvent
 
         Timer audioTimer;
-        internal void Play(string path)
+        internal void Play(string path, bool isEndlessLoop = false)
         {
             audioTimer?.Dispose();
-            audioTimer = new Timer(_ => OnAudioTimerElapsed(path), null, 0, Timeout.Infinite);
+            audioTimer = new Timer(_ => OnAudioTimerElapsed(path, isEndlessLoop), null, 0, Timeout.Infinite);
         }
 
         internal void Stop()
@@ -27,14 +27,10 @@ namespace Tetris
             audioTimer?.Dispose();
             waveOut.Stop();
         }
-        bool isStartAgain = false;
-        bool finish = false;
-        void OnAudioTimerElapsed(string audioPath)
+        void OnAudioTimerElapsed(string audioPath, bool isEndlessLoop)
         {
             lock (lockObject)
             {
-                
-                isStartAgain = true;
                 AudioFileReader audioFileReader;
 
                 // Lade die Sounddatei
@@ -48,21 +44,35 @@ namespace Tetris
                 {
                     // Verbinde den AudioFileReader mit WaveOutEvent
                     audioFileReader = new AudioFileReader(audioPath);
+                    
+                    // Initialisiere den WaveOutEvent mit dem AudioFileReader
+                    waveOut?.Dispose();
+                    waveOut.Init(audioFileReader);
+
+                    // Starte die Wiedergabe
+                    waveOut.Play();
+
+                    // Warte, bis die Wiedergabe abgeschlossen ist
+
+                    if (!isEndlessLoop)
+                        return;
+
+                    while (true)
                     {
-                        // Initialisiere den WaveOutEvent mit dem AudioFileReader
-                        waveOut?.Dispose();
-                        waveOut.Init(audioFileReader);
-
-                        // Starte die Wiedergabe
-                        waveOut.Play();
-
-                        // Warte, bis die Wiedergabe abgeschlossen ist
-                        while (waveOut.PlaybackState == PlaybackState.Playing && finish)
+                        // Warte, bis der Soundeffekt beendet ist
+                        while (waveOut.PlaybackState != PlaybackState.Stopped)
                         {
-                            System.Threading.Thread.Sleep(100);
-                            finish = false;
+                            Thread.Sleep(100);
                         }
-                        finish = true;
+
+                        // Stoppe die Wiedergabe, um sicherzustellen, dass sie zurückgesetzt wird
+                        waveOut.Stop();
+
+                        // Setze die Position des Audio-Readers auf den Anfang
+                        audioFileReader.Position = 0;
+
+                        // Spiele den Soundeffekt erneut ab
+                        waveOut.Play();
                     }
                 }
             }

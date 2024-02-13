@@ -13,7 +13,6 @@ namespace Tetris
     public class Program
     {
         #region PropertiesAndFields
-
         static internal Audio soundtrack {  get; set; }
         static internal Audio music {  get; set; }
 
@@ -22,15 +21,16 @@ namespace Tetris
         static Tetromino nextTetro;
         static bool game = true;
         private static float speed = 1f;
+        static int level = 1;
         private static int speedShreshold = 1;//10;
 
-        static int heightEnvironment = 15;              //höhe 18
-        public static int widthEnvironment = 6;        //mindestbreite = 6. 12 ist ein guter wert (10 spielbreite + 2 für die wände sind beim Originaltetris der Fall)
+        static int heightEnvironment = 18;              //höhe 18
+        public static int widthEnvironment = 12;        //mindestbreite = 6. 12 ist ein guter wert (10 spielbreite + 2 für die wände sind beim Originaltetris der Fall)
         static Vector2 offsetEnvironment = new Vector2(20, 3);
         static Vector2 offSetTetro = new Vector2(0, 5);
         internal static TetrisBoard tetrisBoard;
 
-        static Timer timerTetroMoveDown, timerCheckInput, timerReset;
+        static Timer timerTetroMoveDown, timerCheckInput;
         static bool isCollide = false;
 
         static int smallestNumb, biggestNumb, xPos;
@@ -51,7 +51,7 @@ namespace Tetris
         public static int Score { get; set; }
         public static int DeletedRowsTotal { get; set; }
 
-        private static Vector2 offsetPoints = new Vector2(0, 0);
+        private static Vector2 offsetScore = new Vector2(0, 0);
 
         // braucht man nur für die alternative input variante
         //[DllImport("user32.dll")]
@@ -60,6 +60,8 @@ namespace Tetris
         #endregion
         static void Main()
         {
+            //if (showStartScreen)
+                MainMenu.ShowStartScreen();
             Init();
             
             while (true)
@@ -94,8 +96,7 @@ namespace Tetris
             Console.BufferHeight = 70;
             Console.CursorVisible = false;
             tetrisBoard = new(heightEnvironment, widthEnvironment, enviromentColor);
-            if (showStartScreen)
-                MainMenu.ShowStartScreen();
+            
             InitAndRenderEnvironment();
             RenderInfos();
 
@@ -169,11 +170,7 @@ namespace Tetris
             }
         }
 
-        static void OnTimerResetKeyElapsed()
-        {
-            keyPressed = false;
-        }
-
+        
         /// <summary>
         /// alte Implementierung
         /// </summary>
@@ -268,13 +265,7 @@ namespace Tetris
                         break;
                     case ConsoleKey.UpArrow:
                     case ConsoleKey.W:
-                        if (!keyPressed)
-                        {
-                            keyPressed = true;
-                            Turn(1);
-                            timerReset?.Dispose();
-                            timerReset = new Timer(_ => OnTimerResetKeyElapsed(), null, 90, Timeout.Infinite);
-                        }
+                        Turn(1);
                         break;
                     case ConsoleKey.Spacebar:
                         TogglePause();
@@ -347,8 +338,8 @@ namespace Tetris
 
         static Tetromino RandomTetro()
         {
-            //int randomTetro = new Random().Next(0, 7);
-            int randomTetro = new Random().Next(0, 1);
+            int randomTetro = new Random().Next(0, 7);
+            //int randomTetro = new Random().Next(0, 1);
             Tetromino t;
 
             switch (randomTetro)
@@ -413,7 +404,7 @@ namespace Tetris
                     SaveNewCollider();                      //Speicher die Pos vom neuen Tetro ab
                     int deletedRows = CheckAndClearLines();    //Überprüft, ob eine Linie vollständig ist und löscht diese dann, wenn dies der Fall ist.
                                                             //Gibt die Anzahl der gelöschten Zeilen zurück, welche benötigt wird, um die Punkte zu berechnen
-                    Score += CalculatePoints(deletedRows);
+                    Score += CalculateScore(deletedRows);
                     speed = IncreaseSpeed(deletedRows, speed);
                     //Damit die neue geschwindigkeit gleich übernommen wird
                     timerTetroMoveDown?.Dispose();
@@ -597,7 +588,7 @@ namespace Tetris
                 }
             }
 
-            static int CalculatePoints(int deletedRowAmount)
+            static int CalculateScore(int deletedRowAmount)
             {
                 int pointFactor = 0;
                 switch (deletedRowAmount)
@@ -617,7 +608,7 @@ namespace Tetris
                     default:
                         break;
                 }
-                return pointFactor * (int)(speed * 2);
+                return pointFactor * level;
             }
             
             static float IncreaseSpeed(int deletedRows, float speed)
@@ -628,6 +619,7 @@ namespace Tetris
                 {
                     DeletedRowsTotal = 0;
                     speed += .5f;
+                    level++;
                 }
                 return speed;
             }
@@ -674,7 +666,7 @@ namespace Tetris
 
             static void ClearOldInfos()
             {
-                Console.SetCursorPosition(offsetPoints.x, offsetPoints.y);
+                Console.SetCursorPosition(offsetScore.x, offsetScore.y);
                 Console.WriteLine("                                                                                       ");
                 Console.WriteLine("                                                                                       ");
                 Console.WriteLine("                                                                                       ");
@@ -682,9 +674,9 @@ namespace Tetris
 
             static void RenderNewInfos()
             {
-                Console.SetCursorPosition(offsetPoints.x, offsetPoints.y);
-                Console.WriteLine($"Points: {Score}");
-                Console.WriteLine($"Level: {speed * 2}");
+                Console.SetCursorPosition(offsetScore.x, offsetScore.y);
+                Console.WriteLine($"Score: {Score}");
+                Console.WriteLine($"Level: {level}");
                 Console.WriteLine($"Rows left until level up: {speedShreshold - DeletedRowsTotal}");
             }
         }

@@ -115,7 +115,6 @@ namespace Tetris.Figures
                 Program.soundtrack.Play("Sounds/Rotate.mp3");
             }
         }
-
         
         /// <summary>
         /// Eine Vorschau darstellen, welches Element als nächstes erwartet wird
