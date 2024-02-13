@@ -25,7 +25,7 @@ namespace Tetris.Menus
         static ConsoleColor textColorMusic = ConsoleColor.DarkBlue;
         static ConsoleColor textColorMusic2 = ConsoleColor.DarkRed;
 
-        internal static void ShowStartScreen()
+        internal static void InitMainMenu()
         {
             Console.ForegroundColor = textColorMusic;
             Console.SetCursorPosition(pos.x, pos.y);
@@ -319,6 +319,9 @@ namespace Tetris.Menus
                     }
                     isMainMenu = false;
                     timerHandleInput?.Dispose();
+
+                    Program.gameState = GameState.Playing;
+                    Program.isInit = false;
                 }
                 else if (keyPressed.Key == ConsoleKey.S)
                 {

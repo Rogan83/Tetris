@@ -13,19 +13,19 @@ namespace Tetris
     public class Program
     {
         #region PropertiesAndFields
-        static internal Audio soundtrack {  get; set; }
-        static internal Audio music {  get; set; }
+        static internal Audio soundtrack {get; set; }
+        static internal Audio music {get; set; }
 
         static object lockObject = new object();
         static Tetromino tetro;
         static Tetromino nextTetro;
-        static bool game = true;
+        internal static bool game = true;
         private static float speed = 1f;
         static int level = 1;
         private static int speedShreshold = 1;//10;
 
         static int heightEnvironment = 18;              //höhe 18
-        public static int widthEnvironment = 12;        //mindestbreite = 6. 12 ist ein guter wert (10 spielbreite + 2 für die wände sind beim Originaltetris der Fall)
+        public static int widthEnvironment = 6;        //mindestbreite = 6. 12 ist ein guter wert (10 spielbreite + 2 für die wände sind beim Originaltetris der Fall)
         static Vector2 offsetEnvironment = new Vector2(20, 3);
         static Vector2 offSetTetro = new Vector2(0, 5);
         internal static TetrisBoard tetrisBoard;
@@ -57,38 +57,60 @@ namespace Tetris
         //[DllImport("user32.dll")]
         //public static extern short GetKeyState(ConsoleKey vKey);
         //
+        static internal GameState gameState = GameState.MainMenu;
+        static internal bool isInit = false;
         #endregion
         static void Main()
         {
-            //if (showStartScreen)
-                MainMenu.ShowStartScreen();
-            Init();
-            
-            while (true)
+            while (game)
             {
-                if (!game)                                                      // Wenn das Spiel vorbei ist
+                if (gameState == GameState.MainMenu && !isInit)
                 {
-                    if (Console.ReadKey(true).Key == ConsoleKey.R)              // Starte das Spiel neu, ohne das Hauptmenü zu laden
-                    {
-                        music.Stop();
-                        game = true;
-                        Console.Clear();
-                        Reset();
-                        Init(false);
-                        continue;
-                    }
-                    else if (Console.ReadKey(true).Key == ConsoleKey.Escape)    // Beende das Spiel
-                    {
-                        return;
-                    }
+                    MainMenu.InitMainMenu();
+                    isInit = true;
                 }
+
+                if (gameState == GameState.Playing && !isInit)
+                {
+                    InitGame();
+                    isInit = true;
+                }
+
+                if (gameState == GameState.GameOverMenu && !isInit)
+                {
+                    soundtrack.Play("Sounds/Dead.mp3");
+                    Thread.Sleep(1000);
+                    soundtrack.Play("Sounds/GameOver.mp3");
+                    Thread.Sleep(2000);
+                    GameOverMenu.ShowGameOverScreen();
+
+                    isInit = true;
+                }
+                //if (!Console.KeyAvailable)
+                //    continue;
+                   
+                //if (Console.ReadKey(true).Key == ConsoleKey.R)              // Starte das Spiel neu, ohne das Hauptmenü zu laden
+                //{
+                //    music.Stop();
+                //    game = true;
+                //    Console.Clear();
+                //    Reset();
+                //    //InitGame();
+                //    gameState = GameState.Playing;
+                //    isInit = false;
+                //    continue;
+                //}
+                //if (Console.ReadKey(true).Key == ConsoleKey.Escape)    // Beende das Spiel
+                //{
+                //    return;
+                //}
             }
         }
         /// <summary>
         /// Initialsiert die Startwerte, rendert den Hintergrund und wählt ein zufälliges start Tetro und ein zufälliges 
         /// Tetro aus, welches als nächstes erscheinen wird.
         /// </summary>
-        private static void Init(bool showStartScreen = true)
+        private static void InitGame()
         {
             soundtrack = new();
             music = new();
@@ -118,9 +140,10 @@ namespace Tetris
         /// <summary>
         /// Resettet alle Werte
         /// </summary>
-        private static void Reset()
+        internal static void Reset()
         {
             speed = .5f;
+            level = 1;
             Score = 0;
             DeletedRowsTotal = 0;
         }
@@ -145,7 +168,6 @@ namespace Tetris
         {
             lock (lockObject)
             {
-                
                 DeleteTetro();
                 Vector2 moveDown = new Vector2(0, 1);
                 isCollide = UpdateGame(moveDown);
@@ -393,10 +415,12 @@ namespace Tetris
                 // Wenn das Tetro mit dem Boden kollidiert ist und die Position vom ersten Element vom Tetro über das Spielfeld befindet, dann soll das Spiel beendet werden.
                 if (tetro.endPos1.y < offSetTetro.y)
                 {
-                    game = false;
+                    isInit = false;
+                    gameState = GameState.GameOverMenu;
+
                     timerTetroMoveDown.Dispose();
                     timerCheckInput.Dispose();
-                    GameOver();
+                    
                     return false;
                 }//Wenn das Tetro mit dem Boden kollidiert ist und nicht über das Spielfeld hinaus ragt
                 else
@@ -766,28 +790,9 @@ namespace Tetris
             //    }
             //}
         }
-
-        static void GameOver()
-        {
-            //Console.SetCursorPosition(offsetEnvironment.x, 0);
-            //RenderElement();
-            //Console.ForegroundColor = ConsoleColor.DarkRed;
-            //Console.Write("GAME OVER");
-
-            //int space = 5;
-            //for (int i = 0; i < space; i++)
-            //{
-            //    Console.WriteLine("");
-            //}
-
-            soundtrack.Play("Sounds/Dead.mp3");
-            Thread.Sleep(1000);
-            soundtrack.Play("Sounds/GameOver.mp3");
-            Thread.Sleep(2000);
-
-            GameOverMenu.ShowGameOverScreen();
-        }
     }
+
+    
 }
 
 

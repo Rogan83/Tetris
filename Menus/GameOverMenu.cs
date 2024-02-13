@@ -11,46 +11,12 @@ namespace Tetris.Menus
         private static Vector2 offset = new(10, 3);
         private static int highscore = 0;
         static string highscoreFilePath = "highscore.txt";
+        static Timer timerHandleInput;
+
 
         static internal void ShowGameOverScreen()
         {
-            #region Alternate GameOverScreen
-            //Console.SetCursorPosition(offset.x, offset.y);
-
-            //Console.WriteLine("  ____    ___      __  __  ______       ___    \
-            //Console.WriteLine(" / ___|  / _ \\   |  \\/ ||  ____|     / _ \\
-            //Console.WriteLine("| |  _  / /_\\ \\ | |\\/ || |___      | | | |
-            //Console.WriteLine("| | | | |  _  | | | |  | ||  ___|     | | | |
-            //Console.WriteLine("| |_| | | | | | | | |  |_|| |____     | |_| |
-            //Console.WriteLine("\\____| \\_| |_/  |_|  |_||______|     \\___/
-
-
-            //Console.WriteLine("  ___  ");
-            //Console.WriteLine(" / _ \\ ");
-            //Console.WriteLine("/ /_\\ \\");
-            //Console.WriteLine("|  _  |");
-            //Console.WriteLine("| | | |");
-            //Console.WriteLine("\\_| |_/");
-
-            //Console.WriteLine(" __  __ ");
-            //Console.WriteLine("|  \\/  |");
-            //Console.WriteLine("| |\\/| |");
-            //Console.WriteLine("| |  | |");
-            //Console.WriteLine("|_|  |_|");
-
-            //Console.WriteLine(" ______ ");
-            //Console.WriteLine("|  ____|");
-            //Console.WriteLine("| |___  ");
-            //Console.WriteLine("|  ___| ");
-            //Console.WriteLine("| |____ ");
-            //Console.WriteLine("|______|");
-
-            //Console.WriteLine("  ___  ");
-            //Console.WriteLine(" / _ \\ ");
-            //Console.WriteLine("| | | |");
-            //Console.WriteLine("| | | |");
-            //Console.WriteLine(" \\___/ ");
-            #endregion
+            timerHandleInput = new Timer(_ => OnTimerHandleInputElapsed(), null, 0, 20);
             Program.music.Play("Music/Music GameOver.mp3");
 
             Console.Clear();
@@ -119,6 +85,28 @@ namespace Tetris.Menus
         static void SaveHighscore(int highscore)
         {
             File.WriteAllText(highscoreFilePath, highscore.ToString());
+        }
+
+        static void OnTimerHandleInputElapsed()
+        {
+            if (Console.KeyAvailable)
+            {
+                ConsoleKeyInfo keyPressed = Console.ReadKey(true);
+                if (keyPressed.Key == ConsoleKey.R)              // Starte das Spiel neu, ohne das Hauptmenü zu laden
+                {
+                    Program.music.Stop();
+                    Program.game = true;
+                    Console.Clear();
+                    Program.Reset();
+                    Program.gameState = GameState.Playing;
+                    Program.isInit = false;
+                    timerHandleInput?.Dispose();
+                }
+                else if (keyPressed.Key == ConsoleKey.Escape)    // Beende das Spiel
+                {
+                    Program.game = false;
+                }
+            }
         }
     }
 }
