@@ -16,6 +16,10 @@ namespace Tetris
         static internal Audio soundtrack {get; set; }
         static internal Audio music {get; set; }
 
+        static internal string pathMusicA = "Music/Music Tetris Type A.mp3";
+        static internal string pathMusicB = "Music/Music Tetris Type B.mp3";
+        static internal string pathMusicC = "Music/Music Tetris Type C.mp3";
+
         static internal object lockObject = new object();
         static Tetromino tetro;
         static Tetromino nextTetro;
@@ -63,6 +67,11 @@ namespace Tetris
         #endregion
         static void Main()
         {
+            soundtrack = new();
+            music = new();
+
+            music.Play(Program.pathMusicA, true);
+
             MainMenu.InitMainMenu();
 
             while (true) { }
@@ -72,6 +81,7 @@ namespace Tetris
             timerTetroMoveDown?.Dispose();
             timerCheckInput?.Dispose();
 
+            music.Stop();
             soundtrack.Play("Sounds/Dead.mp3");
             Thread.Sleep(1000);
             soundtrack.Play("Sounds/GameOver.mp3");
@@ -85,9 +95,6 @@ namespace Tetris
         internal static void InitGame()
         {
             Reset();
-
-            soundtrack = new();
-            music = new();
 
             Console.BufferHeight = 70;
             Console.CursorVisible = false;

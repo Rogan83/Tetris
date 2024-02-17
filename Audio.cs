@@ -19,7 +19,8 @@ namespace Tetris
         Timer audioTimer;
         internal void Play(string path, bool isEndlessLoop = false)
         {
-            audioTimer?.Dispose();
+            //audioTimer?.Dispose();
+            Stop();
             audioTimer = new Timer(_ => OnAudioTimerElapsed(path, isEndlessLoop), null, 0, Timeout.Infinite);
         }
 
