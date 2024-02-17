@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ namespace Tetris.Menus
 
         static internal void InitGameOverMenu()
         {
+            Program.gamestate = GameState.GameOverMenu;
             timerHandleInput = new Timer(_ => OnTimerHandleInputElapsed(), null, 0, 20);
             Program.music.Play("Music/Music GameOver.mp3",true);
 
@@ -43,6 +45,7 @@ namespace Tetris.Menus
 
             Console.ForegroundColor = ConsoleColor.Blue;
             Console.WriteLine("Press 'R' for Restart or Press 'ESC' to left the game.");
+            Console.WriteLine("To go to the settings menu, press 'S'.");
 
             CheckIfHighscore();
         }
@@ -104,13 +107,23 @@ namespace Tetris.Menus
                         Program.InitGame();
                         timerHandleInput?.Dispose();
                     }
+                    else if (keyPressed.Key == ConsoleKey.S)
+                    {
+                        GoToSettingsMenu();
+                    }
                     else if (keyPressed.Key == ConsoleKey.Escape)    // Beende das Spiel
                     {
                         Program.game = false;
                     }
                 }
             }
-                
+            static void GoToSettingsMenu()
+            {
+                Console.Clear();
+                timerHandleInput?.Dispose();
+
+                Settings.InitSettingsMenu();
+            }
         }
     }
 }

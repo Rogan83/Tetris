@@ -27,17 +27,10 @@ namespace Tetris.Menus
 
         internal static void InitMainMenu()
         {
-            Console.ForegroundColor = textColorMusic;
-            Console.SetCursorPosition(pos.x, pos.y);
-            Console.WriteLine("              ");
-            Console.SetCursorPosition(pos.x, pos.y);
-            Console.WriteLine("Music on");
-
-
+            Program.gamestate = GameState.MainMenu;
             pulse = new Timer(_ => OnTimerPulseElapsed(), null, 0, 1000 / pulseSpeed);
             //timerMusic = new Timer(_ => OnTimerMusicElapsed(), null, 0, Timeout.Infinite);
             timerHandleInput = new Timer(_ => OnTimerHandleInputElapsed(), null, 0, 20);
-
 
             #region soundVonExtern
             //string soundFilePath = "Sounds/test.wma";
@@ -71,8 +64,6 @@ namespace Tetris.Menus
             //    }
             //}
             #endregion
-
-           //while (isMainMenu) { }
         }
         /// <summary>
         /// wählt eine zufällige Farbe für das große Wort "Tetris" aus
@@ -144,15 +135,13 @@ namespace Tetris.Menus
                 Console.WriteLine("To Move, press  A, S, D  OR  the Arrow Keys");
                 Console.WriteLine("To Rotate, press W  OR the Arrow up Key");
                 Console.WriteLine("To Pause, press the spacebar. Press the spacebar again, to continue the game.");
-                Console.WriteLine("To Toggle Music in the Game, press 'S'. Then you can no longer hear it during the actual game.");
+                Console.WriteLine("To go to the settings menu, press 'S'.");
                 Console.WriteLine(" ");
                 Console.WriteLine(" ");
                 Console.WriteLine("Made by Daniel Rothweiler");
             }
         }
 
-        //Todo:
-        //richtige Sounddateien abspielen, wie beim alten Game Boy
         static void OnTimerMusicElapsed()
         {
             while (!stopPlaying)
@@ -336,7 +325,6 @@ namespace Tetris.Menus
                         //    Console.SetCursorPosition(pos.x, pos.y);
                         //    Console.WriteLine("Music off");
                         //}
-
                     }
                 }
             }

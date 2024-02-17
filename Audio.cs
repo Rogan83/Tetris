@@ -13,7 +13,7 @@ namespace Tetris
     internal class Audio
     {
         object lockObject = new object();
-        WaveOutEvent waveOut = new WaveOutEvent(); // Erstelle einen neuen WaveOutEvent
+        internal WaveOutEvent waveOut { get; set; } = new WaveOutEvent(); // Erstelle einen neuen WaveOutEvent
         bool isStopEndless = false;
 
         Timer audioTimer;

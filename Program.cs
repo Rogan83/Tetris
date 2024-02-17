@@ -7,6 +7,7 @@ using System.Linq;
 using System.Data.Common;
 using Tetris.Figures;
 using Tetris.Menus;
+using NAudio.Wave;
 
 namespace Tetris
 {
@@ -16,14 +17,16 @@ namespace Tetris
         static internal Audio soundtrack {get; set; }
         static internal Audio music {get; set; }
 
-        static internal string pathMusicA = "Music/Music Tetris Type A.mp3";
-        static internal string pathMusicB = "Music/Music Tetris Type B.mp3";
-        static internal string pathMusicC = "Music/Music Tetris Type C.mp3";
+        static internal string pathMusicA { get; set; } = "Music/Music Tetris Type A.mp3";
+        static internal string pathMusicB { get; set; } = "Music/Music Tetris Type B.mp3";
+        static internal string pathMusicC { get; set; } = "Music/Music Tetris Type C.mp3";
+
+        static internal string currentPath { get; set; }        //Momentan ausgewählter Pfad vom Musikstück, welcher in den Settings ausgewählt wird
 
         static internal object lockObject = new object();
         static Tetromino tetro;
         static Tetromino nextTetro;
-        internal static bool game = true;
+        
         private static float speed = 1f;
         private static float originSpeed = 1f;
         static int level = 1;
@@ -38,6 +41,7 @@ namespace Tetris
         static Timer timerTetroMoveDown, timerCheckInput;
         static bool isCollide = false;
         static bool isGameOver = false;
+        internal static bool game { get; set; } = true;
 
         static int smallestNumb, biggestNumb, xPos;
         static Random random = new Random();
@@ -59,11 +63,13 @@ namespace Tetris
 
         private static Vector2 offsetScore = new Vector2(0, 0);
 
+        internal static GameState gamestate { get; set; } = GameState.Playing;          // Dient dazu, um zu schauen, in welchen State (Spiel, Menü) man sich momentan befindet
+
         // braucht man nur für die alternative input variante
         //[DllImport("user32.dll")]
         //public static extern short GetKeyState(ConsoleKey vKey);
         //
-        
+
         #endregion
         static void Main()
         {
@@ -71,10 +77,11 @@ namespace Tetris
             music = new();
 
             music.Play(Program.pathMusicA, true);
+            currentPath = Program.pathMusicA;
 
             MainMenu.InitMainMenu();
 
-            while (true) { }
+            while (game) { }
         }
         static void GoToGameOverMenu()
         {
@@ -95,6 +102,14 @@ namespace Tetris
         internal static void InitGame()
         {
             Reset();
+
+            if (music.waveOut.PlaybackState == PlaybackState.Stopped)
+            {
+                if (currentPath != String.Empty)
+                    music.Play(currentPath, true);
+                else
+                    music.Stop();
+            }
 
             Console.BufferHeight = 70;
             Console.CursorVisible = false;
@@ -397,6 +412,7 @@ namespace Tetris
                 }//Wenn das Tetro mit dem Boden kollidiert ist und nicht über das Spielfeld hinaus ragt
                 else
                 {
+                    soundtrack.Play("Sounds/Drop.mp3");
                     SaveNewCollider();                      //Speicher die Pos vom neuen Tetro ab
                     int deletedRows = CheckAndClearLines();    //Überprüft, ob eine Linie vollständig ist und löscht diese dann, wenn dies der Fall ist.
                                                             //Gibt die Anzahl der gelöschten Zeilen zurück, welche benötigt wird, um die Punkte zu berechnen
