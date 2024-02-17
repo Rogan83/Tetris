@@ -17,7 +17,7 @@ namespace Tetris.Menus
         static internal void ShowGameOverScreen()
         {
             timerHandleInput = new Timer(_ => OnTimerHandleInputElapsed(), null, 0, 20);
-            Program.music.Play("Music/Music GameOver.mp3");
+            Program.music.Play("Music/Music GameOver.mp3",true);
 
             Console.Clear();
 
@@ -89,24 +89,28 @@ namespace Tetris.Menus
 
         static void OnTimerHandleInputElapsed()
         {
-            if (Console.KeyAvailable)
+            lock (Program.lockObject)
             {
-                ConsoleKeyInfo keyPressed = Console.ReadKey(true);
-                if (keyPressed.Key == ConsoleKey.R)              // Starte das Spiel neu, ohne das Hauptmenü zu laden
+                if (Console.KeyAvailable)
                 {
-                    Program.music.Stop();
-                    Program.game = true;
-                    Console.Clear();
-                    Program.Reset();
-                    Program.gameState = GameState.Playing;
-                    Program.isInit = false;
-                    timerHandleInput?.Dispose();
-                }
-                else if (keyPressed.Key == ConsoleKey.Escape)    // Beende das Spiel
-                {
-                    Program.game = false;
+                    ConsoleKeyInfo keyPressed = Console.ReadKey(true);
+                    if (keyPressed.Key == ConsoleKey.R)              // Starte das Spiel neu, ohne das Hauptmenü zu laden
+                    {
+                        Program.music.Stop();
+                        Program.game = true;
+                        Console.Clear();
+                        Program.Reset();
+                        Program.gameState = GameState.Playing;
+                        Program.isInit = false;
+                        timerHandleInput?.Dispose();
+                    }
+                    else if (keyPressed.Key == ConsoleKey.Escape)    // Beende das Spiel
+                    {
+                        Program.game = false;
+                    }
                 }
             }
+                
         }
     }
 }

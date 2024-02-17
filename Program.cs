@@ -16,7 +16,7 @@ namespace Tetris
         static internal Audio soundtrack {get; set; }
         static internal Audio music {get; set; }
 
-        static object lockObject = new object();
+        static internal object lockObject = new object();
         static Tetromino tetro;
         static Tetromino nextTetro;
         internal static bool game = true;
@@ -66,44 +66,45 @@ namespace Tetris
             {
                 if (gameState == GameState.MainMenu && !isInit)
                 {
-                    MainMenu.InitMainMenu();
+                    lock (lockObject)
+                    {
+                        MainMenu.InitMainMenu();
+                        isInit = true;
+                    }
+                }
+
+                if (gameState == GameState.SettingsMenu && !isInit)
+                {
+                    Settings.ShowSettings();
                     isInit = true;
                 }
 
                 if (gameState == GameState.Playing && !isInit)
                 {
-                    InitGame();
-                    isInit = true;
+                    lock (lockObject)
+                    {
+                        InitGame();
+                        isInit = true;
+                    }
                 }
+                
 
                 if (gameState == GameState.GameOverMenu && !isInit)
                 {
-                    soundtrack.Play("Sounds/Dead.mp3");
-                    Thread.Sleep(1000);
-                    soundtrack.Play("Sounds/GameOver.mp3");
-                    Thread.Sleep(2000);
-                    GameOverMenu.ShowGameOverScreen();
+                    lock (lockObject)
+                    {
+                        timerTetroMoveDown?.Dispose();
+                        timerCheckInput?.Dispose();
 
-                    isInit = true;
+                        soundtrack.Play("Sounds/Dead.mp3");
+                        Thread.Sleep(1000);
+                        soundtrack.Play("Sounds/GameOver.mp3");
+                        Thread.Sleep(2000);
+                        GameOverMenu.ShowGameOverScreen();
+
+                        isInit = true;
+                    }
                 }
-                //if (!Console.KeyAvailable)
-                //    continue;
-                   
-                //if (Console.ReadKey(true).Key == ConsoleKey.R)              // Starte das Spiel neu, ohne das Hauptmenü zu laden
-                //{
-                //    music.Stop();
-                //    game = true;
-                //    Console.Clear();
-                //    Reset();
-                //    //InitGame();
-                //    gameState = GameState.Playing;
-                //    isInit = false;
-                //    continue;
-                //}
-                //if (Console.ReadKey(true).Key == ConsoleKey.Escape)    // Beende das Spiel
-                //{
-                //    return;
-                //}
             }
         }
         /// <summary>
@@ -164,23 +165,42 @@ namespace Tetris
             tetro.Move(new Vector2(xPos, 0));
         }
 
+        static void Move(int x, int y)
+        {
+            if (isPaused || gameState != GameState.Playing) { return; }       //Wenn das Spiel pausiert ist, dann führe die Bewegung nicht aus
+
+            DeleteTetro();
+            isCollide = UpdateGame(new Vector2(x, y));
+
+            if (gameState != GameState.Playing)
+                return;
+
+            if (isCollide)
+            {
+                isCollide = SpawnNewTetro();
+            }
+
+            RenderElement();
+        }
+
         static void OnTimerTetroMoveDownElapsed()
         {
             lock (lockObject)
             {
-                DeleteTetro();
-                Vector2 moveDown = new Vector2(0, 1);
-                isCollide = UpdateGame(moveDown);
+                Move(0, 1);
+                //DeleteTetro();
+                //Vector2 moveDown = new Vector2(0, 1);
+                //isCollide = UpdateGame(moveDown);
 
-                if (!game)
-                    return;
+                //if (gameState != GameState.Playing)
+                //    return;
 
-                if (isCollide)
-                {
-                    isCollide = SpawnNewTetro(isCollide);
-                }
+                //if (isCollide)
+                //{
+                //    isCollide = SpawnNewTetro(isCollide);
+                //}
 
-                RenderElement();
+                //RenderElement();
             }
         }
 
@@ -297,21 +317,6 @@ namespace Tetris
                 }
             }
 
-            void Move(int x, int y)
-            {
-                if (isPaused) { return; }       //Wenn das Spiel pausiert ist, dann führe die Bewegungn nicht aus
-
-                DeleteTetro();
-                isCollide = UpdateGame(new Vector2(x, y));
-
-                if (isCollide)
-                {
-                    isCollide = SpawnNewTetro(isCollide);
-                }
-
-                RenderElement();
-            }
-
             void Turn(int dir)
             {
                 if (isPaused) { return; }       //Wenn das Spiel pausiert ist, dann führe die Bewegungn nicht aus
@@ -332,8 +337,6 @@ namespace Tetris
                     InitAndRenderEnvironment(ConsoleColor.Cyan);
                     Console.SetCursorPosition(pos.x, pos.y);
                     Console.WriteLine("Pause");
-
-                    timerTetroMoveDown.Change(Timeout.Infinite, Timeout.Infinite);
                 }
                 else
                 {
@@ -341,13 +344,11 @@ namespace Tetris
                     InitAndRenderEnvironment();
                     Console.SetCursorPosition(pos.x, pos.y);
                     Console.WriteLine("          ");
-                    timerTetroMoveDown.Change(0, (int)(500 / speed));
                 }
             }
-
         }
 
-        static bool SpawnNewTetro(bool isCollide)
+        static bool SpawnNewTetro()
         {
             isCollide = false;
             tetro = nextTetro;
@@ -400,7 +401,6 @@ namespace Tetris
             Vector2 targetPos2 = Vector2.AddVector(tetro.endPos2, move);
             Vector2 targetPos3 = Vector2.AddVector(tetro.endPos3, move);
             Vector2 targetPos4 = Vector2.AddVector(tetro.endPos4, move);
-
            
             if (tetrisBoard.Grid[targetPos1.y][targetPos1.x].isCollided == false &&
                  tetrisBoard.Grid[targetPos2.y][targetPos2.x].isCollided == false &&
@@ -417,11 +417,8 @@ namespace Tetris
                 {
                     isInit = false;
                     gameState = GameState.GameOverMenu;
-
-                    timerTetroMoveDown.Dispose();
-                    timerCheckInput.Dispose();
                     
-                    return false;
+                    return true;
                 }//Wenn das Tetro mit dem Boden kollidiert ist und nicht über das Spielfeld hinaus ragt
                 else
                 {

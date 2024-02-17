@@ -14,6 +14,7 @@ namespace Tetris
     {
         object lockObject = new object();
         WaveOutEvent waveOut = new WaveOutEvent(); // Erstelle einen neuen WaveOutEvent
+        bool isStopEndless = false;
 
         Timer audioTimer;
         internal void Play(string path, bool isEndlessLoop = false)
@@ -26,6 +27,7 @@ namespace Tetris
         {
             audioTimer?.Dispose();
             waveOut.Stop();
+            isStopEndless = true;
         }
         void OnAudioTimerElapsed(string audioPath, bool isEndlessLoop)
         {
@@ -56,23 +58,24 @@ namespace Tetris
 
                     if (!isEndlessLoop)
                         return;
+                    else
+                        isStopEndless = false;
 
-                    while (true)
+                    while (!isStopEndless)
                     {
+                        // Spiele den Soundeffekt erneut ab
+                        waveOut.Play();
+
                         // Warte, bis der Soundeffekt beendet ist
                         while (waveOut.PlaybackState != PlaybackState.Stopped)
                         {
                             Thread.Sleep(100);
                         }
-
                         // Stoppe die Wiedergabe, um sicherzustellen, dass sie zurückgesetzt wird
                         waveOut.Stop();
 
                         // Setze die Position des Audio-Readers auf den Anfang
                         audioFileReader.Position = 0;
-
-                        // Spiele den Soundeffekt erneut ab
-                        waveOut.Play();
                     }
                 }
             }

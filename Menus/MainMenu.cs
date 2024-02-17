@@ -73,7 +73,7 @@ namespace Tetris.Menus
             #endregion
 
 
-            while (isMainMenu) { }
+           while (isMainMenu) { }
         }
 
         static void OnTimerPulseElapsed()
@@ -302,47 +302,59 @@ namespace Tetris.Menus
         static Vector2 pos = new(0,0);
         static void OnTimerHandleInputElapsed()
         {
-            if (Console.KeyAvailable)
+            lock (lockObject)
             {
-                ConsoleKeyInfo keyPressed = Console.ReadKey(true);
-
-                if (keyPressed.Key == ConsoleKey.Enter)
+                if (Console.KeyAvailable)
                 {
-                    Console.Clear();
+                    ConsoleKeyInfo keyPressed = Console.ReadKey(true);
 
-                    pulse?.Dispose();
-
-                    if (!toggleIsMusicOn)
+                    if (keyPressed.Key == ConsoleKey.Enter)
                     {
-                        stopPlaying = true;
-                        timerMusic?.Dispose();
+                        Console.Clear();
+
+                        pulse?.Dispose();
+
+                        if (!toggleIsMusicOn)
+                        {
+                            stopPlaying = true;
+                            timerMusic?.Dispose();
+                        }
+                        isMainMenu = false;
+                        timerHandleInput?.Dispose();
+
+                        Program.gameState = GameState.Playing;
+                        Program.isInit = false;
                     }
-                    isMainMenu = false;
-                    timerHandleInput?.Dispose();
-
-                    Program.gameState = GameState.Playing;
-                    Program.isInit = false;
-                }
-                else if (keyPressed.Key == ConsoleKey.S)
-                {
-                    toggleIsMusicOn = !toggleIsMusicOn;
-
-                    if (toggleIsMusicOn)
+                    else if (keyPressed.Key == ConsoleKey.S)
                     {
-                        stopPlaying = false;
-                        Console.ForegroundColor = textColorMusic;
-                        Console.SetCursorPosition(pos.x, pos.y);
-                        Console.WriteLine("              ");
-                        Console.SetCursorPosition(pos.x, pos.y);
-                        Console.WriteLine("Music on");
-                    }
-                    else
-                    {
-                        Console.ForegroundColor = textColorMusic2;
-                        Console.SetCursorPosition(pos.x, pos.y);
-                        Console.WriteLine("               ");
-                        Console.SetCursorPosition(pos.x, pos.y);
-                        Console.WriteLine("Music off");
+                        Console.Clear();
+                        pulse?.Dispose();
+
+                        isMainMenu = false;
+                        timerHandleInput?.Dispose();
+
+                        Program.gameState = GameState.SettingsMenu;
+                        Program.isInit = false;
+                        //toggleIsMusicOn = !toggleIsMusicOn;
+
+                        //if (toggleIsMusicOn)
+                        //{
+                        //    stopPlaying = false;
+                        //    Console.ForegroundColor = textColorMusic;
+                        //    Console.SetCursorPosition(pos.x, pos.y);
+                        //    Console.WriteLine("              ");
+                        //    Console.SetCursorPosition(pos.x, pos.y);
+                        //    Console.WriteLine("Music on");
+                        //}
+                        //else
+                        //{
+                        //    Console.ForegroundColor = textColorMusic2;
+                        //    Console.SetCursorPosition(pos.x, pos.y);
+                        //    Console.WriteLine("               ");
+                        //    Console.SetCursorPosition(pos.x, pos.y);
+                        //    Console.WriteLine("Music off");
+                        //}
+
                     }
                 }
             }
