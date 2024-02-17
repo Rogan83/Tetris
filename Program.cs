@@ -21,6 +21,7 @@ namespace Tetris
         static Tetromino nextTetro;
         internal static bool game = true;
         private static float speed = 1f;
+        private static float originSpeed = 1f;
         static int level = 1;
         private static int speedShreshold = 1;//10;
 
@@ -32,6 +33,7 @@ namespace Tetris
 
         static Timer timerTetroMoveDown, timerCheckInput;
         static bool isCollide = false;
+        static bool isGameOver = false;
 
         static int smallestNumb, biggestNumb, xPos;
         static Random random = new Random();
@@ -57,62 +59,33 @@ namespace Tetris
         //[DllImport("user32.dll")]
         //public static extern short GetKeyState(ConsoleKey vKey);
         //
-        static internal GameState gameState = GameState.MainMenu;
-        static internal bool isInit = false;
+        
         #endregion
         static void Main()
         {
-            while (game)
-            {
-                if (gameState == GameState.MainMenu && !isInit)
-                {
-                    lock (lockObject)
-                    {
-                        MainMenu.InitMainMenu();
-                        isInit = true;
-                    }
-                }
+            MainMenu.InitMainMenu();
 
-                if (gameState == GameState.SettingsMenu && !isInit)
-                {
-                    Settings.ShowSettings();
-                    isInit = true;
-                }
+            while (true) { }
+        }
+        static void GoToGameOverMenu()
+        {
+            timerTetroMoveDown?.Dispose();
+            timerCheckInput?.Dispose();
 
-                if (gameState == GameState.Playing && !isInit)
-                {
-                    lock (lockObject)
-                    {
-                        InitGame();
-                        isInit = true;
-                    }
-                }
-                
-
-                if (gameState == GameState.GameOverMenu && !isInit)
-                {
-                    lock (lockObject)
-                    {
-                        timerTetroMoveDown?.Dispose();
-                        timerCheckInput?.Dispose();
-
-                        soundtrack.Play("Sounds/Dead.mp3");
-                        Thread.Sleep(1000);
-                        soundtrack.Play("Sounds/GameOver.mp3");
-                        Thread.Sleep(2000);
-                        GameOverMenu.ShowGameOverScreen();
-
-                        isInit = true;
-                    }
-                }
-            }
+            soundtrack.Play("Sounds/Dead.mp3");
+            Thread.Sleep(1000);
+            soundtrack.Play("Sounds/GameOver.mp3");
+            Thread.Sleep(2000);
+            GameOverMenu.InitGameOverMenu();
         }
         /// <summary>
         /// Initialsiert die Startwerte, rendert den Hintergrund und wählt ein zufälliges start Tetro und ein zufälliges 
         /// Tetro aus, welches als nächstes erscheinen wird.
         /// </summary>
-        private static void InitGame()
+        internal static void InitGame()
         {
+            Reset();
+
             soundtrack = new();
             music = new();
 
@@ -143,7 +116,8 @@ namespace Tetris
         /// </summary>
         internal static void Reset()
         {
-            speed = .5f;
+            isGameOver = false;
+            speed = originSpeed;
             level = 1;
             Score = 0;
             DeletedRowsTotal = 0;
@@ -162,22 +136,20 @@ namespace Tetris
                 return;
             }
 
-            tetro.Move(new Vector2(xPos, 0));
+            tetro.MoveTetro(new Vector2(xPos, 0));
         }
 
         static void Move(int x, int y)
         {
-            if (isPaused || gameState != GameState.Playing) { return; }       //Wenn das Spiel pausiert ist, dann führe die Bewegung nicht aus
+            if (isPaused) { return; }       //Wenn das Spiel pausiert ist, dann führe die Bewegung nicht aus
 
             DeleteTetro();
             isCollide = UpdateGame(new Vector2(x, y));
 
-            if (gameState != GameState.Playing)
-                return;
-
-            if (isCollide)
+            // Wenn das Tetro mit dem Boden kollidiert ist, dann Spawne ein neues zufälliges Tetro Element
+            if (isCollide && !isGameOver)
             {
-                isCollide = SpawnNewTetro();
+                isCollide = SpawnNewRandomTetro();
             }
 
             RenderElement();
@@ -187,20 +159,10 @@ namespace Tetris
         {
             lock (lockObject)
             {
-                Move(0, 1);
-                //DeleteTetro();
-                //Vector2 moveDown = new Vector2(0, 1);
-                //isCollide = UpdateGame(moveDown);
-
-                //if (gameState != GameState.Playing)
-                //    return;
-
-                //if (isCollide)
-                //{
-                //    isCollide = SpawnNewTetro(isCollide);
-                //}
-
-                //RenderElement();
+                if (!isGameOver)
+                    Move(0, 1);
+                else
+                    GoToGameOverMenu();
             }
         }
 
@@ -208,10 +170,10 @@ namespace Tetris
         {
             lock (lockObject)
             {
-                HandleInput();
+                if (!isGameOver)
+                    HandleInput();
             }
         }
-
         
         /// <summary>
         /// alte Implementierung
@@ -348,7 +310,7 @@ namespace Tetris
             }
         }
 
-        static bool SpawnNewTetro()
+        static bool SpawnNewRandomTetro()
         {
             isCollide = false;
             tetro = nextTetro;
@@ -395,29 +357,35 @@ namespace Tetris
             return t;
         }
 
-        static bool UpdateGame(Vector2 move)
+        /// <summary>
+        /// Überprüft, ob das Feld, wo sich das Tetro hinbewegt, frei ist. Wenn nicht, dann kollidiert es. Wenn es mit dem Boden kollidiert, dann wird
+        /// in Abhängigkeit, ob das Tetro über das Tetrisfeld hinaus ragt, das Spiel beendet oder die Position von diesen Tetro als Hindernis gespeichert. 
+        /// Zusätzlich wird noch überprüft, ob eine oder mehrere Reihen komplett sind und diese werden, wenn dies der Fall ist, gelöscht.
+        /// Gibt true zurück, wenn es mit dem Boden kollidiert ist.
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        static bool UpdateGame(Vector2 dir)
         {
-            Vector2 targetPos1 = Vector2.AddVector(tetro.endPos1, move);
-            Vector2 targetPos2 = Vector2.AddVector(tetro.endPos2, move);
-            Vector2 targetPos3 = Vector2.AddVector(tetro.endPos3, move);
-            Vector2 targetPos4 = Vector2.AddVector(tetro.endPos4, move);
+            Vector2 targetPos1 = Vector2.AddVector(tetro.endPos1, dir);
+            Vector2 targetPos2 = Vector2.AddVector(tetro.endPos2, dir);
+            Vector2 targetPos3 = Vector2.AddVector(tetro.endPos3, dir);
+            Vector2 targetPos4 = Vector2.AddVector(tetro.endPos4, dir);
            
             if (tetrisBoard.Grid[targetPos1.y][targetPos1.x].isCollided == false &&
                  tetrisBoard.Grid[targetPos2.y][targetPos2.x].isCollided == false &&
                  tetrisBoard.Grid[targetPos3.y][targetPos3.x].isCollided == false &&
                  tetrisBoard.Grid[targetPos4.y][targetPos4.x].isCollided == false)
             {
-                tetro.Move(move);
+                tetro.MoveTetro(dir);
                 return false;
             }
-            else if (move.y == 1)
+            else if (dir.y == 1)
             {
                 // Wenn das Tetro mit dem Boden kollidiert ist und die Position vom ersten Element vom Tetro über das Spielfeld befindet, dann soll das Spiel beendet werden.
                 if (tetro.endPos1.y < offSetTetro.y)
                 {
-                    isInit = false;
-                    gameState = GameState.GameOverMenu;
-                    
+                    isGameOver = true;
                     return true;
                 }//Wenn das Tetro mit dem Boden kollidiert ist und nicht über das Spielfeld hinaus ragt
                 else
@@ -788,8 +756,6 @@ namespace Tetris
             //}
         }
     }
-
-    
 }
 
 

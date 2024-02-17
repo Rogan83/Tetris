@@ -72,10 +72,11 @@ namespace Tetris.Menus
             //}
             #endregion
 
-
-           while (isMainMenu) { }
+           //while (isMainMenu) { }
         }
-
+        /// <summary>
+        /// wählt eine zufällige Farbe für das große Wort "Tetris" aus
+        /// </summary>
         static void OnTimerPulseElapsed()
         {
             lock (lockObject)
@@ -310,31 +311,12 @@ namespace Tetris.Menus
 
                     if (keyPressed.Key == ConsoleKey.Enter)
                     {
-                        Console.Clear();
-
-                        pulse?.Dispose();
-
-                        if (!toggleIsMusicOn)
-                        {
-                            stopPlaying = true;
-                            timerMusic?.Dispose();
-                        }
-                        isMainMenu = false;
-                        timerHandleInput?.Dispose();
-
-                        Program.gameState = GameState.Playing;
-                        Program.isInit = false;
+                        GoAndRestartPlayingState();
                     }
                     else if (keyPressed.Key == ConsoleKey.S)
                     {
-                        Console.Clear();
-                        pulse?.Dispose();
+                        GoToSettingsMenu();
 
-                        isMainMenu = false;
-                        timerHandleInput?.Dispose();
-
-                        Program.gameState = GameState.SettingsMenu;
-                        Program.isInit = false;
                         //toggleIsMusicOn = !toggleIsMusicOn;
 
                         //if (toggleIsMusicOn)
@@ -357,6 +339,34 @@ namespace Tetris.Menus
 
                     }
                 }
+            }
+            
+            static void GoAndRestartPlayingState()
+            {
+                Console.Clear();
+
+                pulse?.Dispose();
+
+                if (!toggleIsMusicOn)
+                {
+                    stopPlaying = true;
+                    timerMusic?.Dispose();
+                }
+                isMainMenu = false;
+                timerHandleInput?.Dispose();
+
+                Program.InitGame();
+            }
+
+            static void GoToSettingsMenu()
+            {
+                Console.Clear();
+                pulse?.Dispose();
+
+                isMainMenu = false;
+                timerHandleInput?.Dispose();
+
+                Settings.InitSettingsMenu();
             }
         }
     }

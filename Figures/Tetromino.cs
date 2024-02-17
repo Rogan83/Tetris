@@ -39,7 +39,7 @@ namespace Tetris.Figures
             endPos4 = Vector2.AddVector(startPos4, shift);
         }
 
-        public void Move(Vector2 offset)
+        public void MoveTetro(Vector2 offset)
         {
             shift = Vector2.AddVector(offset, shift);
             CalculateEndPositions();

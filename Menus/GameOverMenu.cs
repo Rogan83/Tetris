@@ -14,7 +14,7 @@ namespace Tetris.Menus
         static Timer timerHandleInput;
 
 
-        static internal void ShowGameOverScreen()
+        static internal void InitGameOverMenu()
         {
             timerHandleInput = new Timer(_ => OnTimerHandleInputElapsed(), null, 0, 20);
             Program.music.Play("Music/Music GameOver.mp3",true);
@@ -99,9 +99,9 @@ namespace Tetris.Menus
                         Program.music.Stop();
                         Program.game = true;
                         Console.Clear();
-                        Program.Reset();
-                        Program.gameState = GameState.Playing;
-                        Program.isInit = false;
+                        //Program.gameState = GameState.Playing;
+                        //Program.isInit = false;
+                        Program.InitGame();
                         timerHandleInput?.Dispose();
                     }
                     else if (keyPressed.Key == ConsoleKey.Escape)    // Beende das Spiel
