@@ -19,7 +19,7 @@ namespace Tetris.Menus
         {
             Program.gamestate = GameState.GameOverMenu;
             timerHandleInput = new Timer(_ => OnTimerHandleInputElapsed(), null, 0, 20);
-            Program.music.Play("Music/Music GameOver.mp3",true);
+            Settings.music.Play("Music/Music GameOver.mp3",Settings.currentMusicVolume, true);
 
             Console.Clear();
 
@@ -99,7 +99,7 @@ namespace Tetris.Menus
                     ConsoleKeyInfo keyPressed = Console.ReadKey(true);
                     if (keyPressed.Key == ConsoleKey.R)              // Starte das Spiel neu, ohne das Hauptmenü zu laden
                     {
-                        Program.music.Stop();
+                        Settings.music.Stop();
                         Program.game = true;
                         Console.Clear();
                         //Program.gameState = GameState.Playing;

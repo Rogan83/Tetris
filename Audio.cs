@@ -12,16 +12,26 @@ namespace Tetris
     // und somit auch mehrere Soundtracks parallel abgespielt werden können (z.B. Musik und Soundeffekte)
     internal class Audio
     {
+        AudioFileReader? audioFileReader;
+
         object lockObject = new object();
         internal WaveOutEvent waveOut { get; set; } = new WaveOutEvent(); // Erstelle einen neuen WaveOutEvent
         bool isStopEndless = false;
 
         Timer audioTimer;
-        internal void Play(string path, bool isEndlessLoop = false)
+
+        internal Audio()
+        {
+            string audioPath = "Sounds/Drop.mp3";               // Default sound
+            if (File.Exists(audioPath))
+                audioFileReader = new AudioFileReader(audioPath);
+        }
+
+        internal void Play(string path, float volume = 1f, bool isEndlessLoop = false)
         {
             //audioTimer?.Dispose();
             Stop();
-            audioTimer = new Timer(_ => OnAudioTimerElapsed(path, isEndlessLoop), null, 0, Timeout.Infinite);
+            audioTimer = new Timer(_ => OnAudioTimerElapsed(path, volume, isEndlessLoop), null, 0, Timeout.Infinite);
         }
 
         internal void Stop()
@@ -30,12 +40,16 @@ namespace Tetris
             waveOut.Stop();
             isStopEndless = true;
         }
-        void OnAudioTimerElapsed(string audioPath, bool isEndlessLoop)
+
+        internal void ChangeVolume(float volume)
+        {
+            if (audioFileReader != null) 
+                audioFileReader.Volume = volume;
+        }
+        void OnAudioTimerElapsed(string audioPath, float volume, bool isEndlessLoop)
         {
             lock (lockObject)
             {
-                AudioFileReader audioFileReader;
-
                 // Lade die Sounddatei
                 if (!File.Exists(audioPath))
                 {
@@ -47,7 +61,7 @@ namespace Tetris
                 {
                     // Verbinde den AudioFileReader mit WaveOutEvent
                     audioFileReader = new AudioFileReader(audioPath);
-                    
+                    audioFileReader.Volume = volume;
                     // Initialisiere den WaveOutEvent mit dem AudioFileReader
                     waveOut?.Dispose();
                     waveOut.Init(audioFileReader);

@@ -9,7 +9,7 @@ namespace Tetris
     /// <summary>
     /// Die Klasse zum Speichern von den Positionen der Kollider und dessen Farbe
     /// </summary>
-    internal class Vector2
+    internal class Vector2 : IEquatable<Vector2>
     {
         public int x, y;
 
@@ -32,6 +32,31 @@ namespace Tetris
                 //Console.WriteLine("Bei der Methode AddVector wurde ein NULL Wert übergeben");
                 return null;
             }
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+            {
+                return false;
+            }
+
+            Vector2 other = (Vector2)obj;
+            return x == other.x && y == other.y;
+        }
+
+        public bool Equals(Vector2 other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            return x == other.x && y == other.y;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(x, y);
         }
     }
 }

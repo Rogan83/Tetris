@@ -7,6 +7,7 @@ using System.Media;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using Tetris.Menus;
 
 
 namespace Tetris.Figures
@@ -112,7 +113,7 @@ namespace Tetris.Figures
         {
             if (enableSound)
             {
-                Program.soundtrack.Play("Sounds/Rotate.mp3");
+                Settings.soundtrack.Play("Sounds/Rotate.mp3", Settings.currentSoundVolume);
             }
         }
         
