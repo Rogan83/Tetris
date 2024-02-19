@@ -96,15 +96,15 @@ namespace Tetris.Menus
         static int posSelectionEndRow = 1;
 
 
-        static Vector2 posMusicA        = new Vector2(0, 5);
-        static Vector2 posMusicB        = new Vector2(0, 6);
-        static Vector2 posMusicC        = new Vector2(0, 7);
-        static Vector2 posNoneMusic     = new Vector2(0, 8);
+        static Vector2 posMusicA            = new Vector2(0, 8);
+        static Vector2 posMusicB            = new Vector2(0, 9);
+        static Vector2 posMusicC            = new Vector2(0, 10);
+        static Vector2 posNoneMusic         = new Vector2(0, 11);
 
-        static Vector2 posVolumeSoundText  = new Vector2(20, 6);
-        static Vector2 posVolumeMusicText  = new Vector2(20, 7);
-        static Vector2 posVolumeSound      = new Vector2(30, 6);
-        static Vector2 posVolumeMusic      = new Vector2(30, 7);
+        static Vector2 posVolumeSoundText   = new Vector2(20, 9);
+        static Vector2 posVolumeMusicText   = new Vector2(20, 10);
+        static Vector2 posVolumeSound       = new Vector2(30, 9);
+        static Vector2 posVolumeMusic       = new Vector2(30, 10);
 
         static internal void InitSettingsMenu()
         {
@@ -114,7 +114,10 @@ namespace Tetris.Menus
             Console.WriteLine("Settings");
             Console.WriteLine(String.Empty);
             Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine("Use the arrow keys to select your music.");
+            Console.WriteLine("Use the down- and up arrow keys to navigate down and up.");
+            Console.WriteLine("Press tab to navigate to the left and right side.");
+            Console.WriteLine("Use the enter key to confirm your choice. ");
+            Console.WriteLine("When you confirm the volume from the sound or music, you can change it with the left- or right arrow.");
 
             if (Program.gamestate == GameState.MainMenu)                // Wenn man sich vorher im Main Menü befand
                 Console.WriteLine("Press Backspace to go back to the Main Menu.");
@@ -339,11 +342,11 @@ namespace Tetris.Menus
 
                     if (isSelectionChanged)
                     {
-                        Program.currentPathMusic = string.Empty;
                         RenderText(posNoneMusic, "None", selectedColor);
                     }
                     else if (isSelectionConfirmed)
                     {
+                        Program.currentPathMusic = string.Empty;
                         music.Stop();
                         RenderText(posNoneMusic, "None", confirmedColor);
                     }

@@ -31,39 +31,6 @@ namespace Tetris.Menus
             pulse = new Timer(_ => OnTimerPulseElapsed(), null, 0, 1000 / pulseSpeed);
             //timerMusic = new Timer(_ => OnTimerMusicElapsed(), null, 0, Timeout.Infinite);
             timerHandleInput = new Timer(_ => OnTimerHandleInputElapsed(), null, 0, 20);
-
-            #region soundVonExtern
-            //string soundFilePath = "Sounds/test.wma";
-
-            //// Erstelle einen neuen WaveOutEvent
-            //using (var waveOut = new WaveOutEvent())
-            //{
-            //    // Lade die Sounddatei
-            //    if (!File.Exists(soundFilePath))
-            //    {
-            //        Console.Error.WriteLine("Musikdatei nicht gefunden");
-            //        // Hier kannst du entscheiden, wie du mit dem Fehler umgehen möchtest
-            //    }
-            //    else
-            //    {
-            //        // Verbinde den AudioFileReader mit WaveOutEvent
-            //        using (var audioFileReader = new AudioFileReader(soundFilePath))
-            //        {
-            //            // Initialisiere den WaveOutEvent mit dem AudioFileReader
-            //            waveOut.Init(audioFileReader);
-
-            //            // Starte die Wiedergabe
-            //            waveOut.Play();
-
-            //            // Warte, bis die Wiedergabe abgeschlossen ist
-            //            while (waveOut.PlaybackState == PlaybackState.Playing)
-            //            {
-            //                System.Threading.Thread.Sleep(100);
-            //            }
-            //        }
-            //    }
-            //}
-            #endregion
         }
         /// <summary>
         /// wählt eine zufällige Farbe für das große Wort "Tetris" aus
@@ -287,7 +254,7 @@ namespace Tetris.Menus
             }
         }
 
-        static bool toggleIsMusicOn = true;
+        //static bool toggleIsMusicOn = true;
 
         static Vector2 pos = new(0,0);
         static void OnTimerHandleInputElapsed()
@@ -305,26 +272,6 @@ namespace Tetris.Menus
                     else if (keyPressed.Key == ConsoleKey.S)
                     {
                         GoToSettingsMenu();
-
-                        //toggleIsMusicOn = !toggleIsMusicOn;
-
-                        //if (toggleIsMusicOn)
-                        //{
-                        //    stopPlaying = false;
-                        //    Console.ForegroundColor = textColorMusic;
-                        //    Console.SetCursorPosition(pos.x, pos.y);
-                        //    Console.WriteLine("              ");
-                        //    Console.SetCursorPosition(pos.x, pos.y);
-                        //    Console.WriteLine("Music on");
-                        //}
-                        //else
-                        //{
-                        //    Console.ForegroundColor = textColorMusic2;
-                        //    Console.SetCursorPosition(pos.x, pos.y);
-                        //    Console.WriteLine("               ");
-                        //    Console.SetCursorPosition(pos.x, pos.y);
-                        //    Console.WriteLine("Music off");
-                        //}
                     }
                 }
             }
@@ -335,11 +282,6 @@ namespace Tetris.Menus
 
                 pulse?.Dispose();
 
-                if (!toggleIsMusicOn)
-                {
-                    stopPlaying = true;
-                    timerMusic?.Dispose();
-                }
                 isMainMenu = false;
                 timerHandleInput?.Dispose();
 

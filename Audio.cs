@@ -12,7 +12,7 @@ namespace Tetris
     // und somit auch mehrere Soundtracks parallel abgespielt werden können (z.B. Musik und Soundeffekte)
     internal class Audio
     {
-        AudioFileReader? audioFileReader;
+        internal AudioFileReader? audioFileReader;
 
         object lockObject = new object();
         internal WaveOutEvent waveOut { get; set; } = new WaveOutEvent(); // Erstelle einen neuen WaveOutEvent

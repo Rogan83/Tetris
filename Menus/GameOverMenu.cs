@@ -19,7 +19,10 @@ namespace Tetris.Menus
         {
             Program.gamestate = GameState.GameOverMenu;
             timerHandleInput = new Timer(_ => OnTimerHandleInputElapsed(), null, 0, 20);
-            Settings.music.Play("Music/Music GameOver.mp3",Settings.currentMusicVolume, true);
+            // Wenn der aktuelle Musik Pfad leer ist, bedeutet das, dass die Musik in den Settings deaktiviert wurden.
+            // In diesen Fall soll auch hier keine Musik abgespielt werden
+            if (Program.currentPathMusic != String.Empty) 
+                Settings.music.Play("Music/Music GameOver.mp3",Settings.currentMusicVolume, true);
 
             Console.Clear();
 
