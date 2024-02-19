@@ -16,6 +16,8 @@ namespace Tetris.Menus
         static bool isSelectionChanged = false;
         static bool isSelectionConfirmed = false;
 
+        static bool isInVolumeSetting = false;
+
         static bool isConfirmedSound = false;
         static bool isConfirmedMusic = false;
 
@@ -56,20 +58,53 @@ namespace Tetris.Menus
 
         static ConsoleColor selectedColor = ConsoleColor.Yellow;
         static ConsoleColor confirmedColor = ConsoleColor.Red;
-        static ConsoleColor volumeColor = ConsoleColor.Green;
+        const ConsoleColor volumeColor = ConsoleColor.Green;
+        private static Vector2 _posSelection = new Vector2(0, 0);
 
-        static Vector2 posSelection     = new Vector2(0, 0);              //Die Position von der Auswahl des Textes, welcher mit einer anderen Schriftfarbe gehighlightet werden soll
-        static Vector2 posSelectionEnd  = new Vector2(1, 3);                   // Die letzte Position
+        static Vector2 posSelection
+        {
+            get => _posSelection; 
+            set
+            {
+                int endPosY;
+                int endPosX;
+
+                _posSelection = value;
+
+                if (_posSelection.x == 0)
+                    endPosY = posSelectionEndColumn1;
+                else
+                    endPosY = posSelectionEndColumn2;
+                endPosX = posSelectionEndRow;
+
+
+                if (_posSelection.y > endPosY)
+                    _posSelection.y = 0;
+                else if (_posSelection.y < 0)
+                    _posSelection.y = endPosY;
+
+                if (_posSelection.x > endPosX)
+                    _posSelection.x = 0;
+                else if (_posSelection.x < 0)
+                    _posSelection.x = endPosX;
+            }
+        }
+
+        static int posSelectionEndColumn1 = 3;              // Definiert, wie groß die max. Größe von der 1, der 2. Spalte und der Reihe ist. (inkl. der Zahl 0)
+        static int posSelectionEndColumn2 = 1;
+
+        static int posSelectionEndRow = 1;
+
 
         static Vector2 posMusicA        = new Vector2(0, 5);
         static Vector2 posMusicB        = new Vector2(0, 6);
         static Vector2 posMusicC        = new Vector2(0, 7);
         static Vector2 posNoneMusic     = new Vector2(0, 8);
 
-        static Vector2 posVolumeSoundText  = new Vector2(20, 5);
-        static Vector2 posVolumeMusicText  = new Vector2(20, 6);
-        static Vector2 posVolumeSound      = new Vector2(30, 5);
-        static Vector2 posVolumeMusic      = new Vector2(30, 6);
+        static Vector2 posVolumeSoundText  = new Vector2(20, 6);
+        static Vector2 posVolumeMusicText  = new Vector2(20, 7);
+        static Vector2 posVolumeSound      = new Vector2(30, 6);
+        static Vector2 posVolumeMusic      = new Vector2(30, 7);
 
         static internal void InitSettingsMenu()
         {
@@ -92,7 +127,6 @@ namespace Tetris.Menus
             HighlightSelectedMusic(posSelection);
             isSelectionChanged = false;
 
-
             while (isInSettingMenu)
             {
                 if (Console.KeyAvailable)
@@ -105,17 +139,39 @@ namespace Tetris.Menus
                     }
                     else if (keyPressed.Key == ConsoleKey.DownArrow)
                     {
-                        posSelection.y++;
-                        if (posSelection.y > posSelectionEnd.y)
-                            posSelection.y = 0;
+                        if (isInVolumeSetting)      //Solange man sich in den Einstellungen befindet, wo man die Lautstärke verändert, dann ignoriere diese Taste
+                            continue;
+
+                        posSelection = new Vector2(posSelection.x, ++posSelection.y);
+
+                        isConfirmedSound = false;
+                        isConfirmedMusic = false;
 
                         isSelectionChanged = true;
                     }
                     else if (keyPressed.Key == ConsoleKey.UpArrow)
                     {
-                        posSelection.y--;
-                        if (posSelection.y < 0)
-                            posSelection.y = posSelectionEnd.y;
+                        if (isInVolumeSetting)      //Solange man sich in den Einstellungen befindet, wo man die Lautstärke verändert, dann ignoriere diese Taste
+                            continue;
+
+                        posSelection = new Vector2(posSelection.x, --posSelection.y);
+
+                        isConfirmedSound = false;
+                        isConfirmedMusic = false;
+
+                        isSelectionChanged = true;
+                    }
+                    else if (keyPressed.Key == ConsoleKey.Tab)
+                    {
+                        if (isInVolumeSetting)          //Solange man sich in den Einstellungen befindet, wo man die Lautstärke verändert, dann ignoriere diese Taste
+                            continue;
+
+                        posSelection = new Vector2(++posSelection.x, posSelection.y);
+                        //Resette die Y-Achse
+                        posSelection.y = 0;
+
+                        isConfirmedSound = false;
+                        isConfirmedMusic = false;
 
                         isSelectionChanged = true;
                     }
@@ -126,22 +182,15 @@ namespace Tetris.Menus
                         {
                             currentSoundVolume += volumeStep;
                             soundtrack.ChangeVolume(currentSoundVolume);
+                            isSelectionConfirmed = true;
                         }
                         else if (isConfirmedMusic)
                         {
                             currentMusicVolume += volumeStep;
                             music.ChangeVolume(currentMusicVolume);
-                        }
-                        else
-                        {
-                            posSelection.x++;
-                            if (posSelection.x > posSelectionEnd.x)
-                                posSelection.x = 0;
-
-                            posSelection.y = 0;
+                            isSelectionConfirmed = true;
                         }
 
-                        isSelectionChanged = true;
                     }
                     else if (keyPressed.Key == ConsoleKey.LeftArrow)
                     {
@@ -150,43 +199,52 @@ namespace Tetris.Menus
                         {
                             currentSoundVolume -= volumeStep;
                             soundtrack?.ChangeVolume(currentSoundVolume);
+                            isSelectionConfirmed = true;
                         }
                         else if (isConfirmedMusic)
                         {
                             currentMusicVolume -= volumeStep;
                             music.ChangeVolume(currentMusicVolume);
+                            isSelectionConfirmed = true;
                         }
-                        else
-                        {
-                            posSelection.x--;
-                            if (posSelection.x < 0)
-                                posSelection.x = posSelectionEnd.x;
-
-                            posSelection.y = 0;
-                        }
-
-                        isSelectionChanged = true;
                     }
                     else if (keyPressed.Key == ConsoleKey.Enter)
                     {
-                        isSelectionConfirmed = true;
+                        //Solange man sich in der Lautstärke Einstellungen befindet, welche sich rechts befinden, soll bei der Enter taste immer zwischen Bestätigen und Selektieren ausgewählt werden, wenn die Enter taste gedrückt wird
+                        if (posSelection.x == 1)
+                        {
+                            isInVolumeSetting = !isInVolumeSetting;
 
-                        if (posSelection.Equals(new Vector2(1, 0))) //Wenn der Sound selektiert wurde, dann bestätige dies
-                        {
-                            isConfirmedSound = true;
-                            isConfirmedMusic = false;
+                            if (isInVolumeSetting)
+                                isSelectionConfirmed = true;
+                            else if (!isInVolumeSetting)
+                                isSelectionChanged = true;
+
+                            if (posSelection.Equals(new Vector2(1, 0)) && isInVolumeSetting) //Wenn der Sound bestätigt wurde, dann bestätige dies
+                            {
+                                isConfirmedSound = true;
+                                isConfirmedMusic = false;
+
+                                //RenderVolume(ConsoleColor.Red);
+                            }
+                            else if (posSelection.Equals(new Vector2(1, 1)) && isInVolumeSetting)
+                            {
+                                isConfirmedSound = false;
+                                isConfirmedMusic = true;
+
+                                //RenderVolume(ConsoleColor.Green, ConsoleColor.Red);
+                            }
+                            else
+                            {
+                                isConfirmedSound = false;
+                                isConfirmedMusic = false;
+
+                                RenderVolume();
+                            }
                         }
-                        else if (posSelection.Equals(new Vector2(1, 1))) //Wenn die Musik selektiert wurde
-                        //else if (posSelection == new Vector2(1, 1)) //Wenn die Musik selektiert wurde
-                        {
-                            isConfirmedSound = false;
-                            isConfirmedMusic = true;
-                        }
+                        // Wenn von der linken Seite was ausgewählt wird ...
                         else
-                        {
-                            isConfirmedSound = false;
-                            isConfirmedMusic = false;
-                        }
+                            isSelectionConfirmed = true;
                     }
                 }
                 if (isSelectionChanged)
@@ -255,25 +313,23 @@ namespace Tetris.Menus
                         case 0:
                             ReRender();
                             if (isSelectionChanged)
-                                RenderText(posVolumeSoundText, "Sound:", selectedColor);
+                                RenderText(posVolumeSoundText, "Sound", selectedColor);
                             else if (isSelectionConfirmed)
                             {
-                                RenderText(posVolumeSoundText, "Sound:", confirmedColor);
+                                RenderText(posVolumeSoundText, "Sound", confirmedColor);
                             }
                             break;
                         case 1:
                             ReRender();
                             if (isSelectionChanged)
-                                RenderText(posVolumeMusicText, "Music:", selectedColor);
+                                RenderText(posVolumeMusicText, "Music", selectedColor);
                             else if (isSelectionConfirmed)
                             {
-                                RenderText(posVolumeMusicText, "Music:", confirmedColor);
+                                RenderText(posVolumeMusicText, "Music", confirmedColor);
                             }
                             break;
                     }
                 }
-
-                
 
                 static void RenderAndPlayMusicC()
                 {
@@ -292,8 +348,6 @@ namespace Tetris.Menus
                         RenderText(posNoneMusic, "None", confirmedColor);
                     }
                 }
-
-                
             }
 
             static void ReRender()          // Render das ganze Menü neu
@@ -303,20 +357,25 @@ namespace Tetris.Menus
                 RenderText(posMusicC, "Music C");
                 RenderText(posNoneMusic, "None");
 
-                RenderText(posVolumeSoundText, "Sound:");
-                RenderText(posVolumeMusicText, "Music:");
+                RenderText(posVolumeSoundText, "Sound");
+                RenderText(posVolumeMusicText, "Music");
 
-                RenderVolume();
+                if (posSelection.Equals(new Vector2(1, 0)) && isInVolumeSetting)
+                    RenderVolume(ConsoleColor.Red);
+                else if (posSelection.Equals(new Vector2(1, 1)) && isInVolumeSetting)
+                    RenderVolume(ConsoleColor.Green, ConsoleColor.Red);
+                else
+                    RenderVolume();
             }
 
-            static void RenderVolume()
+            static void RenderVolume(ConsoleColor volumeSoundColor = volumeColor, ConsoleColor volumeMusicColor = volumeColor)
             {
                 float volume = currentSoundVolume * 10;
                 for (int i = 0; i < 10; i++)
                 {
                     if (i < volume)
                     {
-                        RenderText(new Vector2(posVolumeSound.x + i, posVolumeSound.y), "#", volumeColor);
+                        RenderText(new Vector2(posVolumeSound.x + i, posVolumeSound.y), "#", volumeSoundColor);
                     }
                     else
                     {
@@ -329,7 +388,7 @@ namespace Tetris.Menus
                 {
                     if (i < volume)
                     {
-                        RenderText(new Vector2(posVolumeMusic.x + i, posVolumeMusic.y), "#", volumeColor);
+                        RenderText(new Vector2(posVolumeMusic.x + i, posVolumeMusic.y), "#", volumeMusicColor);
                     }
                     else
                     {
