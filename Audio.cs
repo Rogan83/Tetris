@@ -12,13 +12,34 @@ namespace Tetris
     // und somit auch mehrere Soundtracks parallel abgespielt werden können (z.B. Musik und Soundeffekte)
     internal class Audio
     {
-        internal AudioFileReader? audioFileReader;
+        AudioFileReader? audioFileReader;
+        
+        private float _volume;
+        internal float Volume
+        {
+            get => _volume; 
+            set
+            {
+                float vol = value;
+
+                if (vol > 1)
+                    vol = 1;
+                else if (vol < 0)
+                    vol = 0;
+
+                if (audioFileReader != null)
+                {
+                    audioFileReader.Volume = _volume = vol;
+                }
+            }
+        }
 
         object lockObject = new object();
         internal WaveOutEvent waveOut { get; set; } = new WaveOutEvent(); // Erstelle einen neuen WaveOutEvent
         bool isStopEndless = false;
 
         Timer audioTimer;
+        
 
         internal Audio()
         {
@@ -27,11 +48,11 @@ namespace Tetris
                 audioFileReader = new AudioFileReader(audioPath);
         }
 
-        internal void Play(string path, float volume = 1f, bool isEndlessLoop = false)
+        internal void Play(string path, bool isEndlessLoop = false)
         {
             //audioTimer?.Dispose();
             Stop();
-            audioTimer = new Timer(_ => OnAudioTimerElapsed(path, volume, isEndlessLoop), null, 0, Timeout.Infinite);
+            audioTimer = new Timer(_ => OnAudioTimerElapsed(path, isEndlessLoop), null, 0, Timeout.Infinite);
         }
 
         internal void Stop()
@@ -41,12 +62,7 @@ namespace Tetris
             isStopEndless = true;
         }
 
-        internal void ChangeVolume(float volume)
-        {
-            if (audioFileReader != null) 
-                audioFileReader.Volume = volume;
-        }
-        void OnAudioTimerElapsed(string audioPath, float volume, bool isEndlessLoop)
+        void OnAudioTimerElapsed(string audioPath, bool isEndlessLoop)
         {
             lock (lockObject)
             {
@@ -61,7 +77,7 @@ namespace Tetris
                 {
                     // Verbinde den AudioFileReader mit WaveOutEvent
                     audioFileReader = new AudioFileReader(audioPath);
-                    audioFileReader.Volume = volume;
+                    audioFileReader.Volume = Volume;
                     // Initialisiere den WaveOutEvent mit dem AudioFileReader
                     waveOut?.Dispose();
                     waveOut.Init(audioFileReader);

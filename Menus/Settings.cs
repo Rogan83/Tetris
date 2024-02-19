@@ -27,34 +27,34 @@ namespace Tetris.Menus
         static internal Audio soundtrack { get; set; }  = new Audio();
         static internal Audio music { get; set; } = new Audio();
 
-        static internal float currentSoundVolume
-        {
-            get => _currentSoundVolume; 
-            set
-            {
-                float volume = value;
-                if (volume > 1)
-                    volume = 1;
-                else if (volume < 0)
-                    volume = 0;
-                _currentSoundVolume = volume;
-            }
-        }
-        private static float _currentMusicVolume;
+        //static internal float currentSoundVolume
+        //{
+        //    get => _currentSoundVolume; 
+        //    set
+        //    {
+        //        float volume = value;
+        //        if (volume > 1)
+        //            volume = 1;
+        //        else if (volume < 0)
+        //            volume = 0;
+        //        _currentSoundVolume = volume;
+        //    }
+        //}
+        //private static float _currentMusicVolume;
 
-        static internal float currentMusicVolume
-        {
-            get => _currentMusicVolume; 
-            set
-            {
-                float volume = value;
-                if (volume > 1)
-                    volume = 1;
-                else if (volume < 0)
-                    volume = 0;
-                _currentMusicVolume = volume;
-            }
-        }
+        //static internal float currentMusicVolume
+        //{
+        //    get => _currentMusicVolume; 
+        //    set
+        //    {
+        //        float volume = value;
+        //        if (volume > 1)
+        //            volume = 1;
+        //        else if (volume < 0)
+        //            volume = 0;
+        //        _currentMusicVolume = volume;
+        //    }
+        //}
 
         static ConsoleColor selectedColor = ConsoleColor.Yellow;
         static ConsoleColor confirmedColor = ConsoleColor.Red;
@@ -183,14 +183,16 @@ namespace Tetris.Menus
                         // Wurde der Sound- oder die Musiklautstärke ausgewählt, dann erhöhe die Lautstärke mit der rechten Pfeiltaste
                         if (isConfirmedSound)
                         {
-                            currentSoundVolume += volumeStep;
-                            soundtrack.ChangeVolume(currentSoundVolume);
+                            //currentSoundVolume += volumeStep;
+                            //soundtrack.ChangeVolume(currentSoundVolume);
+                            soundtrack.Volume += volumeStep;
                             isSelectionConfirmed = true;
                         }
-                        else if (isConfirmedMusic)
+                        else    if (isConfirmedMusic)
                         {
-                            currentMusicVolume += volumeStep;
-                            music.ChangeVolume(currentMusicVolume);
+                            //currentMusicVolume += volumeStep;
+                            //music.ChangeVolume(currentMusicVolume);
+                            music.Volume += volumeStep;
                             isSelectionConfirmed = true;
                         }
 
@@ -200,14 +202,16 @@ namespace Tetris.Menus
                         // Wurde der Sound- oder die Musiklautstärke ausgewählt, dann verringer die Lautstärke mit der linken Pfeiltaste
                         if (isConfirmedSound)
                         {
-                            currentSoundVolume -= volumeStep;
-                            soundtrack?.ChangeVolume(currentSoundVolume);
+                            //currentSoundVolume -= volumeStep;
+                            //soundtrack?.ChangeVolume(currentSoundVolume);
+                            soundtrack.Volume -= volumeStep;
                             isSelectionConfirmed = true;
                         }
                         else if (isConfirmedMusic)
                         {
-                            currentMusicVolume -= volumeStep;
-                            music.ChangeVolume(currentMusicVolume);
+                            //currentMusicVolume -= volumeStep;
+                            //music.ChangeVolume(currentMusicVolume);
+                            music.Volume -= volumeStep;
                             isSelectionConfirmed = true;
                         }
                     }
@@ -373,7 +377,8 @@ namespace Tetris.Menus
 
             static void RenderVolume(ConsoleColor volumeSoundColor = volumeColor, ConsoleColor volumeMusicColor = volumeColor)
             {
-                float volume = currentSoundVolume * 10;
+                //float volume = currentSoundVolume * 10;
+                float volume = soundtrack.Volume * 10;
                 for (int i = 0; i < 10; i++)
                 {
                     if (i < volume)
@@ -386,7 +391,8 @@ namespace Tetris.Menus
                     }
                 }
 
-                volume = currentMusicVolume * 10;
+                //volume = currentMusicVolume * 10;
+                volume = music.Volume * 10;
                 for (int i = 0; i < 10; i++)
                 {
                     if (i < volume)
@@ -403,7 +409,7 @@ namespace Tetris.Menus
             static void PlayMusic(string pathMusic)
             {
                 if (Program.gamestate == GameState.MainMenu)
-                    music.Play(pathMusic, currentMusicVolume);
+                    music.Play(pathMusic);
                 Program.currentPathMusic = pathMusic;
             }
 

@@ -22,7 +22,7 @@ namespace Tetris.Menus
             // Wenn der aktuelle Musik Pfad leer ist, bedeutet das, dass die Musik in den Settings deaktiviert wurden.
             // In diesen Fall soll auch hier keine Musik abgespielt werden
             if (Program.currentPathMusic != String.Empty) 
-                Settings.music.Play("Music/Music GameOver.mp3",Settings.currentMusicVolume, true);
+                Settings.music.Play("Music/Music GameOver.mp3", true);
 
             Console.Clear();
 

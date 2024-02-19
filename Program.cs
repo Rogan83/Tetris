@@ -73,11 +73,13 @@ namespace Tetris
         static void Main()
         {
             Settings.soundtrack = new();
-            Settings.currentSoundVolume = 1f;           //Momentane Lautstärke 
+            //Settings.currentSoundVolume = 1f;           //Momentane Lautstärke 
+            Settings.soundtrack.Volume = 1f;
             Settings.music = new();
-            Settings.currentMusicVolume = 1f;
+            //Settings.currentMusicVolume = 1f;
+            Settings.music.Volume = 1f;
 
-            Settings.music.Play(Program.pathMusicA, Settings.currentMusicVolume, true);
+            Settings.music.Play(Program.pathMusicA, true);
             currentPathMusic = Program.pathMusicA;
 
             MainMenu.InitMainMenu();
@@ -90,9 +92,9 @@ namespace Tetris
             timerCheckInput?.Dispose();
 
             Settings.music.Stop();
-            Settings.soundtrack.Play("Sounds/Dead.mp3", Settings.currentSoundVolume);
+            Settings.soundtrack.Play("Sounds/Dead.mp3");
             Thread.Sleep(1000);
-            Settings.soundtrack.Play("Sounds/GameOver.mp3", Settings.currentSoundVolume);
+            Settings.soundtrack.Play("Sounds/GameOver.mp3");
             Thread.Sleep(2000);
             GameOverMenu.InitGameOverMenu();
         }
@@ -107,7 +109,7 @@ namespace Tetris
             if (Settings.music.waveOut.PlaybackState == PlaybackState.Stopped)
             {
                 if (currentPathMusic != String.Empty)
-                    Settings.music.Play(currentPathMusic, Settings.currentMusicVolume, true);
+                    Settings.music.Play(currentPathMusic, true);
                 else
                     Settings.music.Stop();
             }
@@ -413,7 +415,7 @@ namespace Tetris
                 }//Wenn das Tetro mit dem Boden kollidiert ist und nicht über das Spielfeld hinaus ragt
                 else
                 {
-                    Settings.soundtrack.Play("Sounds/Drop.mp3", Settings.currentSoundVolume);
+                    Settings.soundtrack.Play("Sounds/Drop.mp3");
                     SaveNewCollider();                      //Speicher die Pos vom neuen Tetro ab
                     int deletedRows = CheckAndClearLines();    //Überprüft, ob eine Linie vollständig ist und löscht diese dann, wenn dies der Fall ist.
                                                             //Gibt die Anzahl der gelöschten Zeilen zurück, welche benötigt wird, um die Punkte zu berechnen
@@ -463,11 +465,11 @@ namespace Tetris
 
                 if (linesToClear.Count > 0 && linesToClear.Count < 4)
                 {
-                    Settings.soundtrack.Play("Sounds/DeleteRow.mp3", Settings.currentSoundVolume);
+                    Settings.soundtrack.Play("Sounds/DeleteRow.mp3");
                 }
                 else if (linesToClear.Count == 4)
                 {
-                    Settings.soundtrack.Play("Sounds/Delete4Rows.mp3", Settings.currentSoundVolume);
+                    Settings.soundtrack.Play("Sounds/Delete4Rows.mp3");
                 }
 
 
