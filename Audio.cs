@@ -38,8 +38,7 @@ namespace Tetris
         internal WaveOutEvent waveOut { get; set; } = new WaveOutEvent(); // Erstelle einen neuen WaveOutEvent
         bool isStopEndless = false;
 
-        Timer audioTimer;
-        
+        Timer? audioTimer;
 
         internal Audio()
         {
@@ -71,7 +70,6 @@ namespace Tetris
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.Error.WriteLine("Musikdatei nicht gefunden");
-                    // Hier kannst du entscheiden, wie du mit dem Fehler umgehen möchtest
                 }
                 else
                 {
@@ -80,13 +78,14 @@ namespace Tetris
                     audioFileReader.Volume = Volume;
                     // Initialisiere den WaveOutEvent mit dem AudioFileReader
                     waveOut?.Dispose();
-                    waveOut.Init(audioFileReader);
-
-                    // Starte die Wiedergabe
-                    waveOut.Play();
+                    if (audioFileReader != null)
+                    {
+                        waveOut?.Init(audioFileReader);
+                        // Starte die Wiedergabe
+                        waveOut?.Play();
+                    }
 
                     // Warte, bis die Wiedergabe abgeschlossen ist
-
                     if (!isEndlessLoop)
                         return;
                     else
@@ -95,10 +94,13 @@ namespace Tetris
                     while (!isStopEndless)
                     {
                         // Spiele den Soundeffekt erneut ab
-                        waveOut.Play();
+                        if (audioFileReader == null)
+                            return;
+
+                        waveOut?.Play();
 
                         // Warte, bis der Soundeffekt beendet ist
-                        while (waveOut.PlaybackState != PlaybackState.Stopped)
+                        while (waveOut?.PlaybackState != PlaybackState.Stopped)
                         {
                             Thread.Sleep(100);
                         }
@@ -110,7 +112,6 @@ namespace Tetris
                     }
                 }
             }
-            
         }
     }
 }

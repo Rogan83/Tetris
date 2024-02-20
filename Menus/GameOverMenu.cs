@@ -9,48 +9,82 @@ namespace Tetris.Menus
 {
     internal class GameOverMenu
     {
-        private static Vector2 offset = new(10, 3);
-        private static int highscore = 0;
+        #region Felder
+        static bool isInGameOverMenu = true;
+        static int highscore = 0;
         static string highscoreFilePath = "highscore.txt";
-        static Timer timerHandleInput;
+        #endregion
 
-
+        #region Methoden
         static internal void InitGameOverMenu()
         {
-            Program.gamestate = GameState.GameOverMenu;
-            timerHandleInput = new Timer(_ => OnTimerHandleInputElapsed(), null, 0, 20);
+            isInGameOverMenu = true;
+            Program.previousGamestate = PreviousGameState.GameOverMenu;
             // Wenn der aktuelle Musik Pfad leer ist, bedeutet das, dass die Musik in den Settings deaktiviert wurden.
             // In diesen Fall soll auch hier keine Musik abgespielt werden
-            if (Program.currentPathMusic != String.Empty) 
+            if (Program.currentPathMusic != String.Empty)
                 Settings.music.Play("Music/Music GameOver.mp3", true);
 
             Console.Clear();
-
             Console.ForegroundColor = ConsoleColor.DarkRed;
-            
+            CheckIfHighscore();
 
-            Console.WriteLine("");
-            Console.WriteLine("");
-            Console.WriteLine("███▀▀▀██ ███▀▀▀███ ███▀█▄█▀███ ██▀▀▀");
-            Console.WriteLine("██    ██ ██     ██ ██   █   ██ ██   ");
-            Console.WriteLine("██   ▄▄▄ ██▄▄▄▄▄██ ██   ▀   ██ ██▀▀▀");
-            Console.WriteLine("██    ██ ██     ██ ██       ██ ██   ");
-            Console.WriteLine("███▄▄▄██ ██     ██ ██       ██ ██▄▄▄");
-            Console.WriteLine("                                    "); 
-            Console.WriteLine("███▀▀▀███ ▀███  ██▀ ██▀▀▀ ██▀▀▀▀██▄ ");
-            Console.WriteLine("██     ██   ██  ██  ██    ██     ██ ");
-            Console.WriteLine("██     ██   ██  ██  ██▀▀▀ ██▄▄▄▄▄▀▀ ");
-            Console.WriteLine("██     ██   ██  █▀  ██    ██     ██ ");
-            Console.WriteLine("███▄▄▄███   ─▀█▀    ██▄▄▄ ██     ██▄");
-
-            Console.WriteLine("");
-            Console.WriteLine("");
+            RenderGameOverText();
 
             Console.ForegroundColor = ConsoleColor.Blue;
             Console.WriteLine("Press 'R' for Restart or Press 'ESC' to left the game.");
             Console.WriteLine("To go to the settings menu, press 'S'.");
 
-            CheckIfHighscore();
+            while (isInGameOverMenu)
+            {
+                if (Console.KeyAvailable)
+                {
+                    ConsoleKeyInfo keyPressed = Console.ReadKey(true);
+                    if (keyPressed.Key == ConsoleKey.R)              // Starte das Spiel neu, ohne das Hauptmenü zu laden
+                    {
+                        isInGameOverMenu = false;
+                        Console.Clear();
+                        Settings.music.Stop();
+                        Program.game = true;
+                        Program.InitGame();
+                    }
+                    else if (keyPressed.Key == ConsoleKey.S)
+                    {
+                        isInGameOverMenu = false;
+                        GoToSettingsMenu();
+                    }
+                    else if (keyPressed.Key == ConsoleKey.Escape)    // Beende das Spiel
+                    {
+                        isInGameOverMenu = false;
+                        Program.game = false;
+                    }
+                }
+            }
+            static void GoToSettingsMenu()
+            {
+                Console.Clear();
+                Settings.InitSettingsMenu();
+            }
+
+            static void RenderGameOverText()
+            {
+                Console.WriteLine("");
+                Console.WriteLine("");
+                Console.WriteLine("███▀▀▀██ ███▀▀▀███ ███▀█▄█▀███ ██▀▀▀");
+                Console.WriteLine("██    ██ ██     ██ ██   █   ██ ██   ");
+                Console.WriteLine("██   ▄▄▄ ██▄▄▄▄▄██ ██   ▀   ██ ██▀▀▀");
+                Console.WriteLine("██    ██ ██     ██ ██       ██ ██   ");
+                Console.WriteLine("███▄▄▄██ ██     ██ ██       ██ ██▄▄▄");
+                Console.WriteLine("                                    ");
+                Console.WriteLine("███▀▀▀███ ▀███  ██▀ ██▀▀▀ ██▀▀▀▀██▄ ");
+                Console.WriteLine("██     ██   ██  ██  ██    ██     ██ ");
+                Console.WriteLine("██     ██   ██  ██  ██▀▀▀ ██▄▄▄▄▄▀▀ ");
+                Console.WriteLine("██     ██   ██  █▀  ██    ██     ██ ");
+                Console.WriteLine("███▄▄▄███   ─▀█▀    ██▄▄▄ ██     ██▄");
+
+                Console.WriteLine("");
+                Console.WriteLine("");
+            }
         }
         /// <summary>
         /// Überprüft, ob der Highscore geknackt wurde und überschreibt ihn, wenn dies der Fall ist.
@@ -92,41 +126,6 @@ namespace Tetris.Menus
         {
             File.WriteAllText(highscoreFilePath, highscore.ToString());
         }
-
-        static void OnTimerHandleInputElapsed()
-        {
-            lock (Program.lockObject)
-            {
-                if (Console.KeyAvailable)
-                {
-                    ConsoleKeyInfo keyPressed = Console.ReadKey(true);
-                    if (keyPressed.Key == ConsoleKey.R)              // Starte das Spiel neu, ohne das Hauptmenü zu laden
-                    {
-                        Settings.music.Stop();
-                        Program.game = true;
-                        Console.Clear();
-                        //Program.gameState = GameState.Playing;
-                        //Program.isInit = false;
-                        Program.InitGame();
-                        timerHandleInput?.Dispose();
-                    }
-                    else if (keyPressed.Key == ConsoleKey.S)
-                    {
-                        GoToSettingsMenu();
-                    }
-                    else if (keyPressed.Key == ConsoleKey.Escape)    // Beende das Spiel
-                    {
-                        Program.game = false;
-                    }
-                }
-            }
-            static void GoToSettingsMenu()
-            {
-                Console.Clear();
-                timerHandleInput?.Dispose();
-
-                Settings.InitSettingsMenu();
-            }
-        }
+        #endregion
     }
 }

@@ -15,7 +15,6 @@ namespace Tetris
     {
         #region PropertiesAndFields
         
-
         static internal string pathMusicA { get; set; } = "Music/Music Tetris Type A.mp3";
         static internal string pathMusicB { get; set; } = "Music/Music Tetris Type B.mp3";
         static internal string pathMusicC { get; set; } = "Music/Music Tetris Type C.mp3";
@@ -31,7 +30,7 @@ namespace Tetris
         static int level = 1;
         private static int speedShreshold = 1;//10;
 
-        static int heightEnvironment = 18;              //höhe 18
+        static int heightEnvironment = 8;              //höhe 18
         public static int widthEnvironment = 6;        //mindestbreite = 6. 12 ist ein guter wert (10 spielbreite + 2 für die wände sind beim Originaltetris der Fall)
         static Vector2 offsetEnvironment = new Vector2(20, 3);
         static Vector2 offSetTetro = new Vector2(0, 5);
@@ -62,7 +61,7 @@ namespace Tetris
 
         private static Vector2 offsetScore = new Vector2(0, 0);
 
-        internal static GameState gamestate { get; set; } = GameState.Playing;          // Dient dazu, um zu schauen, in welchen State (Spiel, Menü) man sich momentan befindet
+        internal static PreviousGameState previousGamestate { get; set; } = PreviousGameState.Playing;          // Dient dazu, um zu schauen, in welchen State (Spiel, Menü) man sich momentan befindet
 
         // braucht man nur für die alternative input variante
         //[DllImport("user32.dll")]

@@ -27,7 +27,7 @@ namespace Tetris.Menus
 
         internal static void InitMainMenu()
         {
-            Program.gamestate = GameState.MainMenu;
+            Program.previousGamestate = PreviousGameState.MainMenu;
             pulse = new Timer(_ => OnTimerPulseElapsed(), null, 0, 1000 / pulseSpeed);
             //timerMusic = new Timer(_ => OnTimerMusicElapsed(), null, 0, Timeout.Infinite);
             timerHandleInput = new Timer(_ => OnTimerHandleInputElapsed(), null, 0, 20);

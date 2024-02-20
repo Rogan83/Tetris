@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Tetris
 {
-    internal enum GameState
+    internal enum PreviousGameState
     {
         MainMenu,
         GameOverMenu,
