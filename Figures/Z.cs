@@ -12,10 +12,10 @@ namespace Tetris.Figures
     /// </summary>
     internal class Z : Tetromino
     {
-        public Z()
+        internal Z()
         {
             startRotation = rotation = 1;
-            width = 3;
+            Width = 3;
             tetroColor = ConsoleColor.DarkRed;
             StartPos();
         }
@@ -25,12 +25,12 @@ namespace Tetris.Figures
             Rotate(startRotation, false);
         }
 
-        public override void ResetPos()
+        internal override void ResetPos()
         {
             Rotate(startRotation);
         }
 
-        public override void Rotate(int rot, bool enableSound = true)
+        internal override void Rotate(int rot, bool enableSound = true)
         {
             base.Rotate(rot, enableSound);
             switch (rot)
@@ -72,7 +72,7 @@ namespace Tetris.Figures
             }
         }
 
-        public override void RenderPreview()
+        internal override void RenderPreview()
         {
             base.RenderPreview();
 
@@ -84,7 +84,7 @@ namespace Tetris.Figures
                 //   ##
 
                 Console.ForegroundColor = tetroColor;
-                Vector2 startPos = new Vector2(Program.PrevievPos.x + 2, Program.PrevievPos.y + 2);
+                Vector2 startPos = new Vector2(Program.PreviewPos.x + 2, Program.PreviewPos.y + 2);
 
                 Console.SetCursorPosition(startPos.x, startPos.y);
                 Console.WriteLine("#");

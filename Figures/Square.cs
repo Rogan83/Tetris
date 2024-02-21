@@ -12,27 +12,27 @@ namespace Tetris.Figures
     /// </summary>
     internal class Square : Tetromino
     {
-        public Square()
+        internal Square()
         {
             StartPos();
-            width = 2;
+            Width = 2;
             tetroColor = ConsoleColor.Yellow;
         }
 
         private void StartPos()
         {
-            startPos1 = new Vector2(1, 0);
-            startPos2 = new Vector2(1, 1);
-            startPos3 = new Vector2(2, 0);
-            startPos4 = new Vector2(2, 1);
+            StartPos1 = new Vector2(1, 0);
+            StartPos2 = new Vector2(1, 1);
+            StartPos3 = new Vector2(2, 0);
+            StartPos4 = new Vector2(2, 1);
         }
 
-        public override void ResetPos()
+        internal override void ResetPos()
         {
             StartPos();
         }
 
-        public override void RenderPreview()
+        internal override void RenderPreview()
         {
             base.RenderPreview();
 
@@ -44,7 +44,7 @@ namespace Tetris.Figures
                 //  ##
 
                 Console.ForegroundColor = tetroColor;
-                Vector2 startPos = new Vector2(Program.PrevievPos.x + 2, Program.PrevievPos.y + 2);
+                Vector2 startPos = new Vector2(Program.PreviewPos.x + 2, Program.PreviewPos.y + 2);
 
                 Console.SetCursorPosition(startPos.x, startPos.y);
                 Console.WriteLine("#");
@@ -59,7 +59,7 @@ namespace Tetris.Figures
 
         }
 
-        public override void Rotate(int rot, bool enableSound = true)
+        internal override void Rotate(int rot, bool enableSound = true)
         {
             base.Rotate(rot, enableSound);
         }

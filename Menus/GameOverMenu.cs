@@ -9,13 +9,13 @@ namespace Tetris.Menus
 {
     internal class GameOverMenu
     {
-        #region Felder
+        #region fields
         static bool isInGameOverMenu = true;
         static int highscore = 0;
         static string highscoreFilePath = "highscore.txt";
         #endregion
 
-        #region Methoden
+        #region methods
         static internal void InitGameOverMenu()
         {
             isInGameOverMenu = true;

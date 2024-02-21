@@ -14,10 +14,10 @@ namespace Tetris
     {
         AudioFileReader? audioFileReader;
         
-        private float _volume;
+        private float volume;
         internal float Volume
         {
-            get => _volume; 
+            get => volume; 
             set
             {
                 float vol = value;
@@ -29,13 +29,13 @@ namespace Tetris
 
                 if (audioFileReader != null)
                 {
-                    audioFileReader.Volume = _volume = vol;
+                    audioFileReader.Volume = volume = vol;
                 }
             }
         }
 
         object lockObject = new object();
-        internal WaveOutEvent waveOut { get; set; } = new WaveOutEvent(); // Erstelle einen neuen WaveOutEvent
+        internal WaveOutEvent waveOut { get; set; } = new WaveOutEvent(); 
         bool isStopEndless = false;
 
         Timer? audioTimer;

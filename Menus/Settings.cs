@@ -10,12 +10,7 @@ namespace Tetris.Menus
 {
     static internal class Settings
     {
-        #region Eigenschaften
-        static internal Audio soundtrack { get; set; } = new Audio();
-        static internal Audio music { get; set; } = new Audio();
-        #endregion
-
-        #region Felder
+        #region fields
         static bool isInSettingMenu = true;
         static bool isSelectionChanged = false;
         static bool isSelectionConfirmed = false;
@@ -75,7 +70,12 @@ namespace Tetris.Menus
         static Vector2 posVolumeMusic       = new Vector2(30, 10);
         #endregion
 
-        #region Methoden
+        #region properties
+        static internal Audio soundtrack { get; set; } = new Audio();
+        static internal Audio music { get; set; } = new Audio();
+        #endregion
+
+        #region methods
         static internal void InitSettingsMenu()
         {
             isInSettingMenu = true;
@@ -248,7 +248,7 @@ namespace Tetris.Menus
                     isSelectionConfirmed = false;
                 }
             }
-            #region Lokale Methoden
+            #region local methods
             static void HighlightText(Vector2 cursorPos)
             {
                 if (cursorPos.x == 0)   // Wenn man sich im Menü ganz links befindet
@@ -262,7 +262,7 @@ namespace Tetris.Menus
                             if (isSelectionConfirmed)
                             {
                                 RenderText(posMusicA, "Music A", confirmedColor);
-                                PlayMusic(Program.pathMusicA);
+                                PlayMusic(Program.PathMusicA);
                             }
                             break;
                         case 1:
@@ -272,7 +272,7 @@ namespace Tetris.Menus
                             if (isSelectionConfirmed)
                             { 
                                 RenderText(posMusicB, "Music B", confirmedColor);
-                                PlayMusic(Program.pathMusicB);
+                                PlayMusic(Program.PathMusicB);
                             }
                             break;
                         case 2:
@@ -282,7 +282,7 @@ namespace Tetris.Menus
                             if (isSelectionConfirmed)
                             {
                                 RenderText(posMusicC, "Music C", confirmedColor);
-                                PlayMusic(Program.pathMusicC);
+                                PlayMusic(Program.PathMusicC);
                             }
                             break;
                         case 3:
