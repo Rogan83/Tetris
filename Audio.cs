@@ -68,8 +68,9 @@ namespace Tetris
                 // Lade die Sounddatei
                 if (!File.Exists(audioPath))
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Error.WriteLine("Musikdatei nicht gefunden");
+                    //Console.ForegroundColor = ConsoleColor.Red;
+                    //Console.Error.WriteLine("Musikdatei nicht gefunden");
+                    return;
                 }
                 else
                 {

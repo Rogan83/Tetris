@@ -11,6 +11,7 @@ using NAudio.Wave;
 
 namespace Tetris
 {
+    // Bug: Wenn ein Element über die höchstmögliche grenze hinaus geht, dann wird nicht vorher überprüft, ob zeilen gelöscht werden könnten
     public class Program
     {
         #region PropertiesAndFields
@@ -19,19 +20,21 @@ namespace Tetris
         static internal string pathMusicB { get; set; } = "Music/Music Tetris Type B.mp3";
         static internal string pathMusicC { get; set; } = "Music/Music Tetris Type C.mp3";
 
-        static internal string currentPathMusic { get; set; }        //Momentan ausgewählter Pfad vom Musikstück, welcher in den Settings ausgewählt wird
+        //static internal string currentPathMusic { get; set; }        //Momentan ausgewählter Pfad vom Musikstück, welcher in den Settings ausgewählt wird
 
         static internal object lockObject = new object();
         static Tetromino tetro;
         static Tetromino nextTetro;
         
-        private static float speed = 1f;
-        private static float originSpeed = 1f;
+        static float speed = 1f;
+        static float originSpeed = 1f;
         static int level = 1;
-        private static int speedShreshold = 1;//10;
+        static int speedThreshold = 1;          //10 ist der Standardwert
 
-        static int heightEnvironment = 8;              //höhe 18
-        public static int widthEnvironment = 6;        //mindestbreite = 6. 12 ist ein guter wert (10 spielbreite + 2 für die wände sind beim Originaltetris der Fall)
+        static int heightEnvironment = 8;              //standard Höhe 18
+        //mindestbreite = 6. 12 ist ein guter wert (10 spielbreite + 2 für die wände sind beim Originaltetris der Fall)
+        internal static int WidthEnvironment { get; private set; } = 6;
+        
         static Vector2 offsetEnvironment = new Vector2(20, 3);
         static Vector2 offSetTetro = new Vector2(0, 5);
         internal static TetrisBoard tetrisBoard;
@@ -51,7 +54,7 @@ namespace Tetris
         static int blinkSpeed = 200;
 
         //Eigenschaften von der Tetro Vorschau
-        internal static Vector2 PrevievPos { get; set; } = new Vector2(offsetEnvironment.x + widthEnvironment + 5, offsetEnvironment.y + offSetTetro.y);
+        internal static Vector2 PrevievPos { get; set; } = new Vector2(offsetEnvironment.x + WidthEnvironment + 5, offsetEnvironment.y + offSetTetro.y);
         internal static Vector2 PreviewFrameSize { get; set; } = new(7, 8);
         internal static ConsoleColor PreviewFrameColor { get; set; } = ConsoleColor.DarkYellow;
 
@@ -72,14 +75,13 @@ namespace Tetris
         static void Main()
         {
             Settings.soundtrack = new();
-            //Settings.currentSoundVolume = 1f;           //Momentane Lautstärke 
-            Settings.soundtrack.Volume = 1f;
-            Settings.music = new();
-            //Settings.currentMusicVolume = 1f;
-            Settings.music.Volume = 1f;
+            Settings.soundtrack.Volume = Properties.Settings.Default.VolumeSoundtrack;
 
-            Settings.music.Play(Program.pathMusicA, true);
-            currentPathMusic = Program.pathMusicA;
+            Settings.music = new();
+            Settings.music.Volume = Properties.Settings.Default.VolumeMusic;
+
+            if (Properties.Settings.Default.MusicPath != String.Empty)
+                Settings.music.Play(Properties.Settings.Default.MusicPath, true);
 
             MainMenu.InitMainMenu();
 
@@ -107,15 +109,15 @@ namespace Tetris
 
             if (Settings.music.waveOut.PlaybackState == PlaybackState.Stopped)
             {
-                if (currentPathMusic != String.Empty)
-                    Settings.music.Play(currentPathMusic, true);
+                if (Properties.Settings.Default.MusicPath != String.Empty)
+                    Settings.music.Play(Properties.Settings.Default.MusicPath, true);
                 else
                     Settings.music.Stop();
             }
 
             Console.BufferHeight = 70;
             Console.CursorVisible = false;
-            tetrisBoard = new(heightEnvironment, widthEnvironment, enviromentColor);
+            tetrisBoard = new(heightEnvironment, WidthEnvironment, enviromentColor);
             
             InitAndRenderEnvironment();
             RenderInfos();
@@ -150,7 +152,7 @@ namespace Tetris
         static void RandomPosition()
         {
             smallestNumb = 0;
-            biggestNumb = widthEnvironment - tetro.width - 1;
+            biggestNumb = WidthEnvironment - tetro.width - 1;
             xPos = 1;
             if (biggestNumb >= smallestNumb)
                 xPos = random.Next(smallestNumb, biggestNumb);
@@ -255,6 +257,8 @@ namespace Tetris
         //}
         static bool isPaused;
         static bool keyPressed = false;
+        
+
         static void HandleInput()
         {
             // Es gibt einen Mechanismus, bei dem die Betriebssystemtastaturpuffer abgefragt werden, um zu sehen, welche Tasten gedrückt sind. Console.KeyAvailable prüft, ob es Tasten im Puffer gibt,
@@ -495,7 +499,7 @@ namespace Tetris
                 #endregion
 
                 #region zweiteVarianteZumLöschen
-                TetrisBoard newTetrisBoard = new(heightEnvironment, widthEnvironment, enviromentColor);
+                TetrisBoard newTetrisBoard = new(heightEnvironment, WidthEnvironment, enviromentColor);
                 InitEnviroment();
 
                 TetrisBoard oldTetrisBoard = CopyFrom(tetrisBoard);           // eine Sicherung vom alten Board, damit ich noch auf die Farben, wie sie vorher waren, zugreifen kann, da einzelne Zeilen gelöscht werden und das tetrisBoard überschrieben wird. Wird für das aufblinken von den Zeilen, die gelöscht wurden benötigt, damit diese mit den ursprünglichen Farben aufblinken
@@ -504,7 +508,7 @@ namespace Tetris
                 {
                     if (!linesToClear.Contains(row))
                     {
-                        for (int column = 0; column < widthEnvironment; column++)
+                        for (int column = 0; column < WidthEnvironment; column++)
                         {
                             newTetrisBoard.Grid[row][column] = tetrisBoard.Grid[row][column];
                         }
@@ -532,7 +536,7 @@ namespace Tetris
                         {
                             foreach (var rowToClear in linesToClear)
                             {
-                                for (int column = 1; column < widthEnvironment - 1; column++)
+                                for (int column = 1; column < WidthEnvironment - 1; column++)
                                 {
                                     Console.SetCursorPosition(column + offsetEnvironment.x, rowToClear + offsetEnvironment.y);
                                     Console.Write(" ");
@@ -543,7 +547,7 @@ namespace Tetris
 
                             foreach (var rowToClear in linesToClear)
                             {
-                                for (int column = 1; column < widthEnvironment - 1; column++)
+                                for (int column = 1; column < WidthEnvironment - 1; column++)
                                 {
                                     Console.SetCursorPosition(column + offsetEnvironment.x, rowToClear + offsetEnvironment.y);
                                     Console.ForegroundColor = oldTetrisBoard.Grid[rowToClear][column].color;
@@ -564,13 +568,13 @@ namespace Tetris
                 {
                     for (int row = 0; row < heightEnvironment; row++)
                     {
-                        for (int column = 0; column < widthEnvironment; column++)
+                        for (int column = 0; column < WidthEnvironment; column++)
                         {
                             if (row == heightEnvironment - 1)
                             {
                                 newTetrisBoard.Grid[row][column] = new Collider(true, enviromentColor);
                             }
-                            else if (column == 0 || column == widthEnvironment - 1)
+                            else if (column == 0 || column == WidthEnvironment - 1)
                             {
                                 newTetrisBoard.Grid[row][column] = new Collider(true, enviromentColor);
                             }
@@ -580,11 +584,11 @@ namespace Tetris
 
                 static TetrisBoard CopyFrom(TetrisBoard tetrisBoard)
                 {
-                    TetrisBoard temp = new(heightEnvironment, widthEnvironment, enviromentColor);
+                    TetrisBoard temp = new(heightEnvironment, WidthEnvironment, enviromentColor);
 
                     for (int r = 0; r < heightEnvironment; r++)
                     {
-                        for (int c = 0; c < widthEnvironment; c++)
+                        for (int c = 0; c < WidthEnvironment; c++)
                         {
                             temp.Grid[r][c] = tetrisBoard.Grid[r][c];
                         }
@@ -629,7 +633,7 @@ namespace Tetris
             {
                 DeletedRowsTotal += deletedRows;
 
-                if (DeletedRowsTotal >= speedShreshold)
+                if (DeletedRowsTotal >= speedThreshold)
                 {
                     DeletedRowsTotal = 0;
                     speed += .5f;
@@ -643,7 +647,7 @@ namespace Tetris
                 // Render die Umgebung inkl. Tetros (mit den richtigen Farben) erneut
                 for (int y = 0; y < heightEnvironment; y++)
                 {
-                    for (int x = 0; x < widthEnvironment; x++)
+                    for (int x = 0; x < WidthEnvironment; x++)
                     {
                         //Lösche die Elemente an dieser Stelle
                         Console.SetCursorPosition(x + offsetEnvironment.x, y + offsetEnvironment.y);
@@ -657,7 +661,7 @@ namespace Tetris
                                 Console.WriteLine("-");
                             else if (y >= offSetTetro.y)
                             {
-                                if (x == 0 || x == widthEnvironment - 1)
+                                if (x == 0 || x == WidthEnvironment - 1)
                                     Console.WriteLine("|");
                                 else
                                     Console.WriteLine("#");
@@ -691,7 +695,7 @@ namespace Tetris
                 Console.SetCursorPosition(offsetScore.x, offsetScore.y);
                 Console.WriteLine($"Score: {Score}");
                 Console.WriteLine($"Level: {level}");
-                Console.WriteLine($"Rows left until level up: {speedShreshold - DeletedRowsTotal}");
+                Console.WriteLine($"Rows left until level up: {speedThreshold - DeletedRowsTotal}");
             }
         }
 
@@ -751,14 +755,14 @@ namespace Tetris
                 if (i >= offSetTetro.y)
                     Console.Write("|");
 
-                Console.SetCursorPosition(widthEnvironment - 1 + offsetEnvironment.x, i + offsetEnvironment.y);
+                Console.SetCursorPosition(WidthEnvironment - 1 + offsetEnvironment.x, i + offsetEnvironment.y);
                 //collider[widthEnvironment - 1, i] = new Collider(true, ConsoleColor.White);
-                tetrisBoard.Grid[i][widthEnvironment - 1] = new Collider(true, color);
+                tetrisBoard.Grid[i][WidthEnvironment - 1] = new Collider(true, color);
                 if (i >= offSetTetro.y)
                     Console.Write("|");
             }
 
-            for (int i = 0; i < widthEnvironment; i++)
+            for (int i = 0; i < WidthEnvironment; i++)
             {
                 Console.SetCursorPosition(i + offsetEnvironment.x, heightEnvironment - 1 + offsetEnvironment.y);
                 //collider[i, heightEnvironment - 1] = new Collider(true, ConsoleColor.White);

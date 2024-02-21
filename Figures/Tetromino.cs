@@ -62,14 +62,14 @@ namespace Tetris.Figures
             Vector2 newEndPos3 = Vector2.AddVector(newStartPos3, shift);
             Vector2 newEndPos4 = Vector2.AddVector(newStartPos4, shift);
 
-            if (newEndPos1.x < 0 || newEndPos1.x > Program.widthEnvironment - 1 ||
-                newEndPos2.x < 0 || newEndPos2.x > Program.widthEnvironment - 1 ||
-                newEndPos3.x < 0 || newEndPos3.x > Program.widthEnvironment - 1 ||
-                newEndPos4.x < 0 || newEndPos4.x > Program.widthEnvironment - 1)
+            if (newEndPos1.x < 0 || newEndPos1.x > Program.WidthEnvironment - 1 ||
+                newEndPos2.x < 0 || newEndPos2.x > Program.WidthEnvironment - 1 ||
+                newEndPos3.x < 0 || newEndPos3.x > Program.WidthEnvironment - 1 ||
+                newEndPos4.x < 0 || newEndPos4.x > Program.WidthEnvironment - 1)
             {
                 //Falls Außerhalb vom Spielfeld, dann soll die Rotation rückgängig gemacht werden
                 rotation = oldRotation;
-                return;
+                return;  
             }
 
             //if (collider[newEndPos1.x, newEndPos1.y].isCollided == false &&
