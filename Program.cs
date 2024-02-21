@@ -81,7 +81,9 @@ namespace Tetris
             Settings.music.Volume = Properties.Settings.Default.VolumeMusic;
 
             if (Properties.Settings.Default.MusicPath != String.Empty)
+            {
                 Settings.music.Play(Properties.Settings.Default.MusicPath, true);
+            }
 
             MainMenu.InitMainMenu();
 

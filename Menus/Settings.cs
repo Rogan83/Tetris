@@ -149,6 +149,7 @@ namespace Tetris.Menus
                             if (isConfirmedSound)
                             {
                                 soundtrack.Volume += volumeStep;
+                                soundtrack.Play("Sounds/Drop.mp3");
                                 Properties.Settings.Default.VolumeSoundtrack = soundtrack.Volume;
                                 Properties.Settings.Default.Save();
                                 isSelectionConfirmed = true;
@@ -178,6 +179,7 @@ namespace Tetris.Menus
                             if (isConfirmedSound)
                             {
                                 soundtrack.Volume -= volumeStep;
+                                soundtrack.Play("Sounds/Drop.mp3");
                                 Properties.Settings.Default.VolumeSoundtrack = soundtrack.Volume;
                                 Properties.Settings.Default.Save();
                                 isSelectionConfirmed = true;
