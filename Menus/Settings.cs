@@ -23,6 +23,8 @@ namespace Tetris.Menus
 
         static ConsoleColor selectedColor = ConsoleColor.Yellow;
         static ConsoleColor confirmedColor = ConsoleColor.Red;
+        static ConsoleColor disableColor = ConsoleColor.DarkGray;           // Dient dazu, die Lautstärke so einzufärben, wenn der Ton deaktiviert ist
+
         const ConsoleColor volumeColor = ConsoleColor.Green;
 
         static int posSelectionEndColumn1 = 3;              // Definiert, wie groß die max. Größe von der 1, der 2. Spalte und der Reihe ist. (inkl. der Zahl 0)
@@ -256,7 +258,7 @@ namespace Tetris.Menus
                     switch (cursorPos.y)
                     {
                         case 0:
-                            ReRender();
+                            ClearMenu();
                             if (isSelectionChanged)
                                 RenderText(posMusicA, "Music A", selectedColor);
                             if (isSelectionConfirmed)
@@ -264,9 +266,10 @@ namespace Tetris.Menus
                                 RenderText(posMusicA, "Music A", confirmedColor);
                                 PlayMusic(Program.PathMusicA);
                             }
+                            RenderAllVolume();
                             break;
                         case 1:
-                            ReRender();
+                            ClearMenu();
                             if (isSelectionChanged)
                                 RenderText(posMusicB, "Music B", selectedColor);
                             if (isSelectionConfirmed)
@@ -274,9 +277,10 @@ namespace Tetris.Menus
                                 RenderText(posMusicB, "Music B", confirmedColor);
                                 PlayMusic(Program.PathMusicB);
                             }
+                            RenderAllVolume();
                             break;
                         case 2:
-                            ReRender();
+                            ClearMenu();
                             if (isSelectionChanged)
                                 RenderText(posMusicC, "Music C", selectedColor);
                             if (isSelectionConfirmed)
@@ -284,14 +288,17 @@ namespace Tetris.Menus
                                 RenderText(posMusicC, "Music C", confirmedColor);
                                 PlayMusic(Program.PathMusicC);
                             }
+                            RenderAllVolume();
                             break;
                         case 3:
-                            ReRender();
-                            RenderAndPlayMusicC();
+                            ClearMenu();
+                            RenderAndMuteMusic();
+                            RenderAllVolume();
                             break;
                         default:
-                            ReRender();
-                            RenderAndPlayMusicC();
+                            ClearMenu();
+                            RenderAndMuteMusic();
+                            RenderAllVolume();
                             break;
                     }
                 }
@@ -301,27 +308,29 @@ namespace Tetris.Menus
                     switch (cursorPos.y)
                     {
                         case 0:
-                            ReRender();
+                            ClearMenu();
                             if (isSelectionChanged)
                                 RenderText(posVolumeSoundText, "Sound", selectedColor);
                             else if (isSelectionConfirmed)
                             {
                                 RenderText(posVolumeSoundText, "Sound", confirmedColor);
                             }
+                            RenderAllVolume();
                             break;
                         case 1:
-                            ReRender();
+                            ClearMenu();
                             if (isSelectionChanged)
                                 RenderText(posVolumeMusicText, "Music", selectedColor);
                             else if (isSelectionConfirmed)
                             {
                                 RenderText(posVolumeMusicText, "Music", confirmedColor);
                             }
+                            RenderAllVolume();
                             break;
                     }
                 }
                 // Rendert das ganze Menü neu
-                static void ReRender()          // Render das ganze Menü neu
+                static void ClearMenu()          
                 {
                     RenderText(posMusicA, "Music A");
                     RenderText(posMusicB, "Music B");
@@ -330,15 +339,50 @@ namespace Tetris.Menus
 
                     RenderText(posVolumeSoundText, "Sound");
                     RenderText(posVolumeMusicText, "Music");
-
-                    if (PosSelection.Equals(new Vector2(1, 0)) && isInVolumeSetting)
+                }
+                static void RenderAllVolume()
+                {
+                    if (PosSelection.Equals(new Vector2(1, 0)) && isInVolumeSetting)            // isInVolumeSetting = auf den soundeinstellungen enter gedrückt
                         RenderVolume(ConsoleColor.Red);
                     else if (PosSelection.Equals(new Vector2(1, 1)) && isInVolumeSetting)
                         RenderVolume(ConsoleColor.Green, ConsoleColor.Red);
+                    else if (Properties.Settings.Default.MusicPath == String.Empty)
+                        RenderVolume(ConsoleColor.Green, disableColor);
                     else
                         RenderVolume();
+
+                    static void RenderVolume(ConsoleColor volumeSoundColor = volumeColor, ConsoleColor volumeMusicColor = volumeColor)
+                    {
+                        //float volume = currentSoundVolume * 10;
+                        float volume = soundtrack.Volume * 10;
+                        for (int i = 0; i < 10; i++)
+                        {
+                            if (i < volume)
+                            {
+                                RenderText(new Vector2(posVolumeSound.x + i, posVolumeSound.y), "#", volumeSoundColor);
+                            }
+                            else
+                            {
+                                RenderText(new Vector2(posVolumeSound.x + i, posVolumeSound.y), "#");
+                            }
+                        }
+
+                        volume = music.Volume * 10;
+                        for (int i = 0; i < 10; i++)
+                        {
+                            if (i < volume)
+                            {
+                                RenderText(new Vector2(posVolumeMusic.x + i, posVolumeMusic.y), "#", volumeMusicColor);
+                            }
+                            else
+                            {
+                                RenderText(new Vector2(posVolumeMusic.x + i, posVolumeMusic.y), "#");
+                            }
+                        }
+                    }
                 }
-                static void RenderAndPlayMusicC()
+
+                static void RenderAndMuteMusic()
                 {
                     RenderText(posMusicA, "Music A");
                     RenderText(posMusicB, "Music B");
@@ -354,39 +398,12 @@ namespace Tetris.Menus
                         Properties.Settings.Default.Save();
                         music.Stop();
                         RenderText(posMusicOff, "Music off", confirmedColor);
+                        //RenderText(posVolumeMusicText, "Music", disableColor);
                     }
                 }
             }
             
-            static void RenderVolume(ConsoleColor volumeSoundColor = volumeColor, ConsoleColor volumeMusicColor = volumeColor)
-            {
-                //float volume = currentSoundVolume * 10;
-                float volume = soundtrack.Volume * 10;
-                for (int i = 0; i < 10; i++)
-                {
-                    if (i < volume)
-                    {
-                        RenderText(new Vector2(posVolumeSound.x + i, posVolumeSound.y), "#", volumeSoundColor);
-                    }
-                    else
-                    {
-                        RenderText(new Vector2(posVolumeSound.x + i, posVolumeSound.y), "#");
-                    }
-                }
-
-                volume = music.Volume * 10;
-                for (int i = 0; i < 10; i++)
-                {
-                    if (i < volume)
-                    {
-                        RenderText(new Vector2(posVolumeMusic.x + i, posVolumeMusic.y), "#", volumeMusicColor);
-                    }
-                    else
-                    {
-                        RenderText(new Vector2(posVolumeMusic.x + i, posVolumeMusic.y), "#");
-                    }
-                }
-            }
+            
 
             static void PlayMusic(string pathMusic)
             {

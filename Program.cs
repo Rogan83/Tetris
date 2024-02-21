@@ -26,7 +26,6 @@ namespace Tetris
         static Vector2 offSetTetro = new Vector2(0, 5);
         static Vector2 offsetScore = new Vector2(0, 0);
 
-
         static object lockObject = new object();
 
         static float speed = 1f;
