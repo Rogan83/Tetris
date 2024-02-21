@@ -8,13 +8,13 @@ namespace Tetris
 {
     internal class TetrisBoard
     {
-        public int Rows { get; private set; }
-        public int Cols { get; private set; }
+        internal int Rows { get; private set; }
+        internal int Cols { get; private set; }
 
-        public ConsoleColor EnviromentColor { get; set; }
-        public List<Collider[]> Grid { get; private set; }
+        internal ConsoleColor EnviromentColor { get; set; }
+        internal List<Collider[]> Grid { get; private set; }
 
-        public TetrisBoard(int rows, int cols, ConsoleColor enviromentColor)
+        internal TetrisBoard(int rows, int cols, ConsoleColor enviromentColor)
         {
             Rows = rows;
             Cols = cols;
@@ -22,7 +22,7 @@ namespace Tetris
             InitializeGrid(enviromentColor);
         }
 
-        private void InitializeGrid(ConsoleColor enviromentColor)
+        void InitializeGrid(ConsoleColor enviromentColor)
         {
             Grid = new List<Collider[]>();
             for (int r = 0; r < Rows; r++)

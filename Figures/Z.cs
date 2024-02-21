@@ -41,7 +41,7 @@ namespace Tetris.Figures
                     Vector2 newStartPos3 = new Vector2(2, 1);
                     Vector2 newStartPos4 = new Vector2(3, 1);
 
-                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    CheckForCollisionAfterRotation(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
                     break;
                 case 2:
                     newStartPos1 = new Vector2(2, 0);
@@ -49,7 +49,7 @@ namespace Tetris.Figures
                     newStartPos3 = new Vector2(2, 1);
                     newStartPos4 = new Vector2(1, 2);
 
-                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    CheckForCollisionAfterRotation(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
                     break;
                 case 3:
                     newStartPos1 = new Vector2(1, 1);
@@ -57,7 +57,7 @@ namespace Tetris.Figures
                     newStartPos3 = new Vector2(2, 2);
                     newStartPos4 = new Vector2(3, 2);
 
-                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    CheckForCollisionAfterRotation(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
                     break;
                 case 4:
                     newStartPos1 = new Vector2(2, 0);
@@ -65,7 +65,7 @@ namespace Tetris.Figures
                     newStartPos3 = new Vector2(2, 1);
                     newStartPos4 = new Vector2(1, 2);
 
-                    CheckForCollision(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
+                    CheckForCollisionAfterRotation(newStartPos1, newStartPos2, newStartPos3, newStartPos4);
                     break;
                 default:
                     break;

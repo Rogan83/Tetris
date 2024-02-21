@@ -8,12 +8,12 @@ namespace Tetris
 {
     internal class Collider
     {
-        public bool isCollided;
-        public ConsoleColor color;
+        internal bool isPositionOccupied;
+        internal ConsoleColor color;
 
-        public Collider(bool isCollided, ConsoleColor color)
+        internal Collider(bool isFieldOccupied, ConsoleColor color)
         {
-            this.isCollided = isCollided;
+            this.isPositionOccupied = isFieldOccupied;
             this.color = color;
         }
     }

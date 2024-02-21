@@ -22,7 +22,7 @@ namespace Tetris
 
         static Random random = new Random();
 
-        static Vector2 offsetEnvironment = new Vector2(20, 3);
+        static Vector2 offsetEnvironment = new Vector2(20, 5);
         static Vector2 offSetTetro = new Vector2(0, 5);
         static Vector2 offsetScore = new Vector2(0, 0);
 
@@ -31,7 +31,7 @@ namespace Tetris
         static float speed = 1f;
         static float originSpeed = 1f;
         static int level = 1;
-        static int speedThreshold = 1;          //10 ist der Standardwert
+        static int speedThreshold = 10;          //10 ist der Standardwert
         static int smallestNumb, biggestNumb, xPos;
 
         static bool isCollide = false;
@@ -53,7 +53,7 @@ namespace Tetris
 
         internal static bool game { get; set; } = true;
 
-        internal static int HeightEnvironment { get; private set; } = 18;              //standard Höhe 18
+        internal static int HeightEnvironment { get; private set; } = 4 + offSetTetro.y + 1;              //standard Höhe 18
 
         internal static int WidthEnvironment { get; private set; } = 6;         //mindestbreite = 6. 12 ist ein guter wert (10 spielbreite + 2 für die wände sind beim Originaltetris der Fall)
 
@@ -337,6 +337,7 @@ namespace Tetris
             isCollide = false;
             tetro = nextTetro;
             nextTetro = RandomTetro();
+
             nextTetro.RenderPreview();
             RandomPosition();
 
@@ -345,7 +346,7 @@ namespace Tetris
 
         static Tetromino RandomTetro()
         {
-            int randomTetro = new Random().Next(0, 7);
+            int randomTetro = new Random().Next(0, 7);  //7 vers. Tetros gibt es
             Tetromino t;
 
             switch (randomTetro)
@@ -390,32 +391,73 @@ namespace Tetris
         {
             if (tetro == null || tetrisBoard == null) return false;
 
-            Vector2 targetPos1 = Vector2.AddVector(tetro.EndPos1, dir);
-            Vector2 targetPos2 = Vector2.AddVector(tetro.EndPos2, dir);
-            Vector2 targetPos3 = Vector2.AddVector(tetro.EndPos3, dir);
-            Vector2 targetPos4 = Vector2.AddVector(tetro.EndPos4, dir);
+            Vector2 targetPos1 = Vector2.AddVector(tetro.CurrentPos1, dir);
+            Vector2 targetPos2 = Vector2.AddVector(tetro.CurrentPos2, dir);
+            Vector2 targetPos3 = Vector2.AddVector(tetro.CurrentPos3, dir);
+            Vector2 targetPos4 = Vector2.AddVector(tetro.CurrentPos4, dir);
            
-            if (tetrisBoard.Grid[targetPos1.y][targetPos1.x].isCollided == false &&
-                tetrisBoard.Grid[targetPos2.y][targetPos2.x].isCollided == false &&
-                tetrisBoard.Grid[targetPos3.y][targetPos3.x].isCollided == false &&
-                tetrisBoard.Grid[targetPos4.y][targetPos4.x].isCollided == false)
+            if (tetrisBoard.Grid[targetPos1.y][targetPos1.x].isPositionOccupied == false &&
+                tetrisBoard.Grid[targetPos2.y][targetPos2.x].isPositionOccupied == false &&
+                tetrisBoard.Grid[targetPos3.y][targetPos3.x].isPositionOccupied == false &&
+                tetrisBoard.Grid[targetPos4.y][targetPos4.x].isPositionOccupied == false)
             {
                 tetro.MoveTetro(dir);
                 return false;
             }
             else if (dir.y == 1)
             {
-                // Wenn das Tetro mit dem Boden kollidiert ist und die Position vom ersten Element vom Tetro über das Spielfeld befindet, dann soll das Spiel beendet werden.
-                if (tetro.EndPos1.y < offSetTetro.y)
+                // Wenn das Tetro mit dem Boden kollidiert ist und die Position vom ersten Element vom Tetro über das Spielfeld befindet, dann soll
+                // erstmal überprüft werden, wie viele Zeilen gelöscht werden können. Wenn nach Abzug der Linien immer noch der Rest über den 
+                // Spielrand hinaus ragt, dann soll das Spiel beendet werden.
+
+
+                /// Überprüfe, welches Element vom Tetro sich am weitesten oben befindet. 
+                /// Dieses hat die kleinste zahl in der y-Koordinate, weil der Ursprung von der Y-Achse oben anfängt
+                List<Vector2> positions = new List<Vector2>();
+                positions.Add(tetro.CurrentPos1);
+                positions.Add(tetro.CurrentPos2);
+                positions.Add(tetro.CurrentPos3);
+                positions.Add(tetro.CurrentPos4);
+
+                Vector2 highestElement = new(0, 0);
+                double lowestYCoordinate = double.PositiveInfinity;
+                foreach (var pos in positions)
+                {
+                    if (pos.y < lowestYCoordinate)
+                    {
+                        lowestYCoordinate = pos.y;
+                        highestElement = pos;
+                    }
+                }
+                ///
+
+                float tetroSpawnPosY = offsetEnvironment.y - offSetTetro.y;
+                float tetroSpawnPointGroundPosY = tetroSpawnPosY + tetro.Width;
+
+                SaveNewCollider();                      //Speicher die Pos vom neuen Tetro ab
+
+                int completeLines = CountCompleteLines(false);
+
+                // Das Spielfeld ist um den Betrag größer, der die größe von der verschiebung vom gespawnten Tetro nach oben entspricht, aber diesen sieht man nicht.
+                // Dieser Bereich dient nur dazu, dass dort Tetros spawnen können und diese sich über den Spielfeld nicht
+                // in der X-Achse außerhalb vom Spielfeld positionieren können, weil sie dort auch auf Kollisionen überprüft werden.
+                // Somit können sie sich nicht zu weit nach links oder rechts bewegen lassen.
+                int upperEdgePlayingField = offsetEnvironment.y + offSetTetro.y;
+
+                // Bestimmt, welche Reihe sich am weitesten oben befindet, wenn die reihen, die komplett sind, abgezogen werden
+                int upperEdgeHighestRow = highestElement.y + completeLines + offsetEnvironment.y;
+
+                if (upperEdgeHighestRow < upperEdgePlayingField)         
                 {
                     isGameOver = true;
                     return true;
-                }//Wenn das Tetro mit dem Boden kollidiert ist und nicht über das Spielfeld hinaus ragt
+                }
+                //Wenn das Tetro mit dem Boden kollidiert ist und nicht über das Spielfeld hinaus ragt
                 else
                 {
                     Settings.soundtrack.Play("Sounds/Drop.mp3");
-                    SaveNewCollider();                      //Speicher die Pos vom neuen Tetro ab
-                    int deletedRows = CheckAndClearLines();    //Überprüft, ob eine Linie vollständig ist und löscht diese dann, wenn dies der Fall ist.
+                    
+                    int deletedRows = CountCompleteLines();    //Überprüft, ob eine Linie vollständig ist und löscht diese dann standardmäßig, wenn dies der Fall ist. Wenn False übergeben wird, dann löscht es sie nicht
                                                             //Gibt die Anzahl der gelöschten Zeilen zurück, welche benötigt wird, um die Punkte zu berechnen
                     Score += CalculateScore(deletedRows);
                     speed = IncreaseSpeed(deletedRows, speed);
@@ -439,15 +481,15 @@ namespace Tetris
             {
                 if (tetro == null || tetrisBoard == null) return;
 
-                tetrisBoard.Grid[tetro.EndPos1.y][tetro.EndPos1.x] = new Collider(true, tetro.tetroColor);
-                tetrisBoard.Grid[tetro.EndPos2.y][tetro.EndPos2.x] = new Collider(true, tetro.tetroColor);
-                tetrisBoard.Grid[tetro.EndPos3.y][tetro.EndPos3.x] = new Collider(true, tetro.tetroColor);
-                tetrisBoard.Grid[tetro.EndPos4.y][tetro.EndPos4.x] = new Collider(true, tetro.tetroColor);
+                tetrisBoard.Grid[tetro.CurrentPos1.y][tetro.CurrentPos1.x] = new Collider(true, tetro.tetroColor);
+                tetrisBoard.Grid[tetro.CurrentPos2.y][tetro.CurrentPos2.x] = new Collider(true, tetro.tetroColor);
+                tetrisBoard.Grid[tetro.CurrentPos3.y][tetro.CurrentPos3.x] = new Collider(true, tetro.tetroColor);
+                tetrisBoard.Grid[tetro.CurrentPos4.y][tetro.CurrentPos4.x] = new Collider(true, tetro.tetroColor);
 
                 RenderElement();
             }
-
-            static int CheckAndClearLines()
+            //Überprüft, wie viele Linien vollständig sind und löscht diese anschließend optional
+            static int CountCompleteLines(bool delete = true)
             {
                 if (tetrisBoard == null) { return 0; }
 
@@ -458,12 +500,15 @@ namespace Tetris
                 for (int row = HeightEnvironment - 2; row >= 0; row--)
                 {
                     // Überprüfe, ob alle Zellen in der Zeile gefüllt sind
-                    if (tetrisBoard.Grid[row].All(cell => cell.isCollided == true))
+                    if (tetrisBoard.Grid[row].All(cell => cell.isPositionOccupied == true))
                     {
                         // Füge die zu löschende Zeile zur Liste hinzu
                         linesToClear.Add(row);
                     }
                 }
+
+                if (!delete) return linesToClear.Count;         // Gebe nur die Anzahl der zu löschenden Zeilen zurück
+
 
                 if (linesToClear.Count > 0 && linesToClear.Count < 4)
                 {
@@ -499,7 +544,7 @@ namespace Tetris
 
                 #region zweiteVarianteZumLöschen
                 TetrisBoard newTetrisBoard = new(HeightEnvironment, WidthEnvironment, enviromentColor);
-                InitEnviroment();
+                InitNewTetrisBoard();
 
                 TetrisBoard oldTetrisBoard = CopyFrom(tetrisBoard);           // eine Sicherung vom alten Board, damit ich noch auf die Farben, wie sie vorher waren, zugreifen kann, da einzelne Zeilen gelöscht werden und das tetrisBoard überschrieben wird. Wird für das aufblinken von den Zeilen, die gelöscht wurden benötigt, damit diese mit den ursprünglichen Farben aufblinken
 
@@ -563,7 +608,7 @@ namespace Tetris
 
                 return linesToClear.Count;
 
-                void InitEnviroment()
+                void InitNewTetrisBoard()
                 {
                     for (int row = 0; row < HeightEnvironment; row++)
                     {
@@ -654,7 +699,7 @@ namespace Tetris
                         Console.SetCursorPosition(x + offsetEnvironment.x, y + offsetEnvironment.y);
                         Console.WriteLine(" ");
 
-                        if (tetrisBoard.Grid[y][x].isCollided == true)
+                        if (tetrisBoard.Grid[y][x].isPositionOccupied == true)
                         {
                             Console.SetCursorPosition(x + offsetEnvironment.x, y + offsetEnvironment.y);
                             Console.ForegroundColor = tetrisBoard.Grid[y][x].color;
@@ -706,13 +751,13 @@ namespace Tetris
 
             Console.ForegroundColor = tetro.tetroColor;
 
-            Console.SetCursorPosition(tetro.EndPos1.x + offsetEnvironment.x, tetro.EndPos1.y + offsetEnvironment.y);
+            Console.SetCursorPosition(tetro.CurrentPos1.x + offsetEnvironment.x, tetro.CurrentPos1.y + offsetEnvironment.y);
             Console.Write("#");
-            Console.SetCursorPosition(tetro.EndPos2.x + offsetEnvironment.x, tetro.EndPos2.y + offsetEnvironment.y);
+            Console.SetCursorPosition(tetro.CurrentPos2.x + offsetEnvironment.x, tetro.CurrentPos2.y + offsetEnvironment.y);
             Console.Write("#");
-            Console.SetCursorPosition(tetro.EndPos3.x + offsetEnvironment.x, tetro.EndPos3.y + offsetEnvironment.y);
+            Console.SetCursorPosition(tetro.CurrentPos3.x + offsetEnvironment.x, tetro.CurrentPos3.y + offsetEnvironment.y);
             Console.Write("#");
-            Console.SetCursorPosition(tetro.EndPos4.x + offsetEnvironment.x, tetro.EndPos4.y + offsetEnvironment.y);
+            Console.SetCursorPosition(tetro.CurrentPos4.x + offsetEnvironment.x, tetro.CurrentPos4.y + offsetEnvironment.y);
             Console.Write("#");
         }
         /// <summary>
@@ -722,24 +767,24 @@ namespace Tetris
         {
             if (tetro == null) return;
 
-            if (tetro.EndPos1 != null)
+            if (tetro.CurrentPos1 != null)
             {
-                Console.SetCursorPosition(tetro.EndPos1.x + offsetEnvironment.x, tetro.EndPos1.y + offsetEnvironment.y);
+                Console.SetCursorPosition(tetro.CurrentPos1.x + offsetEnvironment.x, tetro.CurrentPos1.y + offsetEnvironment.y);
                 Console.Write(" ");
             }
-            if (tetro.EndPos2 != null)
+            if (tetro.CurrentPos2 != null)
             {
-                Console.SetCursorPosition(tetro.EndPos2.x + offsetEnvironment.x, tetro.EndPos2.y + offsetEnvironment.y);
+                Console.SetCursorPosition(tetro.CurrentPos2.x + offsetEnvironment.x, tetro.CurrentPos2.y + offsetEnvironment.y);
                 Console.Write(" ");
             }
-            if (tetro.EndPos3 != null)
+            if (tetro.CurrentPos3 != null)
             {
-                Console.SetCursorPosition(tetro.EndPos3.x + offsetEnvironment.x, tetro.EndPos3.y + offsetEnvironment.y);
+                Console.SetCursorPosition(tetro.CurrentPos3.x + offsetEnvironment.x, tetro.CurrentPos3.y + offsetEnvironment.y);
                 Console.Write(" ");
             }
-            if (tetro.EndPos4 != null)
+            if (tetro.CurrentPos4 != null)
             {
-                Console.SetCursorPosition(tetro.EndPos4.x + offsetEnvironment.x, tetro.EndPos4.y + offsetEnvironment.y);
+                Console.SetCursorPosition(tetro.CurrentPos4.x + offsetEnvironment.x, tetro.CurrentPos4.y + offsetEnvironment.y);
                 Console.Write(" ");
             }
         }

@@ -21,10 +21,10 @@ namespace Tetris.Figures
         internal Vector2 StartPos3 { get; set; }  = new(0,0);
         internal Vector2 StartPos4 { get; set; }  = new(0,0);
 
-        internal Vector2 EndPos1 { get; set; }  = new(0,0);
-        internal Vector2 EndPos2 { get; set; }  = new(0,0);
-        internal Vector2 EndPos3 { get; set; }  = new(0,0);
-        internal Vector2 EndPos4 { get; set; }  = new(0,0);
+        internal Vector2 CurrentPos1 { get; set; }  = new(0,0);
+        internal Vector2 CurrentPos2 { get; set; }  = new(0,0);
+        internal Vector2 CurrentPos3 { get; set; }  = new(0,0);
+        internal Vector2 CurrentPos4 { get; set; }  = new(0,0);
 
         internal Vector2 TetroShift { get; set; } = new(0,0);       // wie weit hat sich das Tetro während dem spielen verschoben. Die einzelnen Elemente vom Tetro (StartPos1 - 4) mit ihren eigenen Positionen werden relativ zu diesen Vector ausgerichtet.
 
@@ -35,51 +35,51 @@ namespace Tetris.Figures
         #endregion
         
         #region methods
-        internal void CalculateEndPositions()
+        internal void CalculateCurrentPositions()
         {
-            EndPos1 = Vector2.AddVector(StartPos1, TetroShift);
-            EndPos2 = Vector2.AddVector(StartPos2, TetroShift);
-            EndPos3 = Vector2.AddVector(StartPos3, TetroShift);
-            EndPos4 = Vector2.AddVector(StartPos4, TetroShift);
+            CurrentPos1 = Vector2.AddVector(StartPos1, TetroShift);
+            CurrentPos2 = Vector2.AddVector(StartPos2, TetroShift);
+            CurrentPos3 = Vector2.AddVector(StartPos3, TetroShift);
+            CurrentPos4 = Vector2.AddVector(StartPos4, TetroShift);
         }
 
         internal void MoveTetro(Vector2 offset)
         {
             TetroShift = Vector2.AddVector(offset, TetroShift);
-            CalculateEndPositions();
+            CalculateCurrentPositions();
         }
 
-        internal void Move(int x, int y)
+        internal void MoveTetro(int x, int y)
         {
             Vector2 offset = new Vector2(x, y);
             TetroShift = Vector2.AddVector(offset, TetroShift);       // Berechnet die neue Position, von wo sich die einzelen Elemente vom Tetro orientieren.
 
-            CalculateEndPositions();
+            CalculateCurrentPositions();
         }
 
         //Überprüft, ob nach der Rotation eine Kollision entsteht bzw. ob sich ein Element außerhalb vom Spielfeld betrifft.
         //Falls nicht, dann rotiert sich das Element.
-        protected void CheckForCollision(Vector2 newStartPos1, Vector2 newStartPos2, Vector2 newStartPos3, Vector2 newStartPos4)
+        protected void CheckForCollisionAfterRotation(Vector2 newStartPos1, Vector2 newStartPos2, Vector2 newStartPos3, Vector2 newStartPos4)
         {
-            Vector2 newEndPos1 = Vector2.AddVector(newStartPos1, TetroShift);
-            Vector2 newEndPos2 = Vector2.AddVector(newStartPos2, TetroShift);
-            Vector2 newEndPos3 = Vector2.AddVector(newStartPos3, TetroShift);
-            Vector2 newEndPos4 = Vector2.AddVector(newStartPos4, TetroShift);
+            Vector2 newCurrentPos1 = Vector2.AddVector(newStartPos1, TetroShift);
+            Vector2 newCurrentPos2 = Vector2.AddVector(newStartPos2, TetroShift);
+            Vector2 newCurrentPos3 = Vector2.AddVector(newStartPos3, TetroShift);
+            Vector2 newCurrentPos4 = Vector2.AddVector(newStartPos4, TetroShift);
 
-            if (newEndPos1.x < 0 || newEndPos1.x > Program.WidthEnvironment - 1 ||
-                newEndPos2.x < 0 || newEndPos2.x > Program.WidthEnvironment - 1 ||
-                newEndPos3.x < 0 || newEndPos3.x > Program.WidthEnvironment - 1 ||
-                newEndPos4.x < 0 || newEndPos4.x > Program.WidthEnvironment - 1)
+            if (newCurrentPos1.x < 0 || newCurrentPos1.x > Program.WidthEnvironment - 1 ||
+                newCurrentPos2.x < 0 || newCurrentPos2.x > Program.WidthEnvironment - 1 ||
+                newCurrentPos3.x < 0 || newCurrentPos3.x > Program.WidthEnvironment - 1 ||
+                newCurrentPos4.x < 0 || newCurrentPos4.x > Program.WidthEnvironment - 1)
             {
                 //Falls Außerhalb vom Spielfeld, dann soll die Rotation rückgängig gemacht werden
                 rotation = OldRotation;
                 return;  
             }
 
-            if (Program.tetrisBoard.Grid[newEndPos1.y][newEndPos1.x].isCollided == false &&
-                Program.tetrisBoard.Grid[newEndPos2.y][newEndPos2.x].isCollided == false &&
-                Program.tetrisBoard.Grid[newEndPos3.y][newEndPos3.x].isCollided == false &&
-                Program.tetrisBoard.Grid[newEndPos4.y][newEndPos4.x].isCollided == false)
+            if (Program.tetrisBoard.Grid[newCurrentPos1.y][newCurrentPos1.x].isPositionOccupied == false &&
+                Program.tetrisBoard.Grid[newCurrentPos2.y][newCurrentPos2.x].isPositionOccupied == false &&
+                Program.tetrisBoard.Grid[newCurrentPos3.y][newCurrentPos3.x].isPositionOccupied == false &&
+                Program.tetrisBoard.Grid[newCurrentPos4.y][newCurrentPos4.x].isPositionOccupied == false)
             {
                 StartPos1 = newStartPos1;
                 StartPos2 = newStartPos2;
@@ -107,7 +107,7 @@ namespace Tetris.Figures
 
             Rotate(rotation);
 
-            CalculateEndPositions();
+            CalculateCurrentPositions();
         }
         internal virtual void Rotate(int rotation, bool enableSound = true)
         {
